@@ -51,11 +51,10 @@ type SearchSort struct {
 }
 
 type SearchParameters struct {
-	Query       string       `json:"query"`
-	Sort        SearchSort   `json:"sort"`
-	Filter      SearchFilter `json:"filter"`
-	StartCursor string       `json:"-" url:"start_cursor,omitempty"`
-	PageSize    int32        `json:"-" url:"page_size,omitempty"`
+	PaginationParameters
+	Query  string       `json:"query"`
+	Sort   SearchSort   `json:"sort"`
+	Filter SearchFilter `json:"filter"`
 }
 
 type SearchableObject interface {

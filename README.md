@@ -18,10 +18,10 @@ go get -u github.com/mkfsn/notion-go
 - [x] Users ✅
    * [x] Retrieve ✅
    * [x] List ✅
-- [ ] Databases ⚠️
+- [x] Databases ✅
   * [x] Retrieve ✅
   * [x] List ✅
-  * [ ] Query ❌
+  * [x] Query ✅
 - [ ] Pages ⚠️
   * [x] Retrieve ✅
   * [ ] Create ❌
