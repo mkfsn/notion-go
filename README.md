@@ -4,7 +4,7 @@ A go client for the [Notion API](https://developers.notion.com/)
 
 ## Description
 
-This aims to be a Go version of the [official SDK](https://github.com/makenotion/notion-sdk-js)
+This aims to be an unofficial Go version of [the official SDK](https://github.com/makenotion/notion-sdk-js)
 which is written in JavaScript.
 
 ## Installation
