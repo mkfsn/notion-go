@@ -1,5 +1,9 @@
 package notion
 
+import (
+	"context"
+)
+
 const (
 	APIBaseURL                        = "https://api.notion.com"
 	APIUsersListEndpoint              = "/v1/users"
@@ -20,10 +24,11 @@ const (
 )
 
 type API struct {
-	usersClient     *usersClient
-	databasesClient *databasesClient
-	pagesClient     *pagesClient
-	blocksClient    *blocksClient
+	searchClient    SearchInterface
+	usersClient     UsersInterface
+	databasesClient DatabasesInterface
+	pagesClient     PagesInterface
+	blocksClient    BlocksInterface
 }
 
 func New(setters ...ClientOption) *API {
@@ -35,6 +40,7 @@ func New(setters ...ClientOption) *API {
 	client := newHTTPClient(options)
 
 	return &API{
+		searchClient:    newSearchClient(client),
 		usersClient:     newUsersClient(client),
 		databasesClient: newDatabasesClient(client),
 		pagesClient:     newPagesClient(client),
@@ -68,4 +74,11 @@ func (c *API) Blocks() BlocksInterface {
 		return nil
 	}
 	return c.blocksClient
+}
+
+func (c *API) Search(ctx context.Context, params SearchParameters) (*SearchResponse, error) {
+	if c == nil {
+		return nil, ErrUnknown
+	}
+	return c.searchClient.Search(ctx, params)
 }

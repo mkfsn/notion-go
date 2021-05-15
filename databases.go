@@ -18,6 +18,8 @@ type Database struct {
 	Properties     map[string]Property `json:"properties"`
 }
 
+func (d Database) isSearchable() {}
+
 func (d *Database) UnmarshalJSON(data []byte) error {
 	type Alias Database
 
@@ -300,6 +302,45 @@ type RichText interface {
 	isRichText()
 }
 
+func newRichText(data []byte) (RichText, error) {
+	var base baseRichText
+
+	if err := json.Unmarshal(data, &base); err != nil {
+		return nil, err
+	}
+
+	switch base.Type {
+	case RichTextTypeText:
+		var richText RichTextText
+
+		if err := json.Unmarshal(data, &richText); err != nil {
+			return nil, err
+		}
+
+		return richText, nil
+
+	case RichTextTypeMention:
+		var richText RichTextMention
+
+		if err := json.Unmarshal(data, &richText); err != nil {
+			return nil, err
+		}
+
+		return richText, nil
+
+	case RichTextTypeEquation:
+		var richText RichTextEquation
+
+		if err := json.Unmarshal(data, &richText); err != nil {
+			return nil, err
+		}
+
+		return richText, nil
+	}
+
+	return nil, ErrUnknown
+}
+
 type RichTextType string
 
 const (
@@ -469,7 +510,10 @@ type MultiSelectOption struct {
 
 type SelectProperty struct {
 	baseProperty
-	Select []SelectOption `json:"select"`
+
+	Select struct {
+		Options []SelectOption `json:"options"`
+	} `json:"select"`
 }
 
 type MultiSelectProperty struct {
@@ -588,8 +632,8 @@ type DatabasesRetrieveResponse struct {
 }
 
 type DatabasesListParameters struct {
-	StartCursor string `json:"start_cursor"`
-	PageSize    int32  `json:"page_size"`
+	StartCursor string `json:"start_cursor,omitempty"`
+	PageSize    int32  `json:"page_size,omitempty"`
 }
 
 type DatabasesListResponse struct {
@@ -779,7 +823,7 @@ type DatabasesQueryParameters struct {
 	Sorts []Sort `json:"sorts"`
 	// When supplied, returns a page of results starting after the cursor provided.
 	// If not supplied, this endpoint will return the first page of results.
-	StartCursor string `json:"start_cursor"`
+	StartCursor string `json:"start_cursor,omitempty"`
 	// The number of items from the full list desired in the response. Maximum: 100
 	PageSize int32 `json:"page_size"`
 }

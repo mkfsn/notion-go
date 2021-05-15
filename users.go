@@ -79,7 +79,7 @@ func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) error {
 }
 
 type UsersListParameters struct {
-	StartCursor string `json:"start_cursor"`
+	StartCursor string `json:"start_cursor,omitempty"`
 	PageSize    int32  `json:"page_size"`
 }
 

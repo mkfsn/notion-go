@@ -69,6 +69,10 @@ func (c *httpClient) Request(ctx context.Context, method string, endpoint string
 		return nil, err
 	}
 
+	if body != nil {
+		req.Header.Add("Content-Type", "application/json")
+	}
+
 	req.Header.Add("Notion-Version", c.notionVersion)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
 
