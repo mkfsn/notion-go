@@ -79,14 +79,12 @@ func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) error {
 }
 
 type UsersListParameters struct {
-	StartCursor string `json:"start_cursor,omitempty"`
-	PageSize    int32  `json:"page_size"`
+	PaginationParameters
 }
 
 type UsersListResponse struct {
-	Results    []User `json:"results"`
-	NextCursor string `json:"next_cursor"`
-	HasMore    bool   `json:"has_more"`
+	PaginatedList
+	Results []User `json:"results"`
 }
 
 func (u *UsersListResponse) UnmarshalJSON(data []byte) error {

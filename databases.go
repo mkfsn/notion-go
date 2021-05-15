@@ -632,14 +632,12 @@ type DatabasesRetrieveResponse struct {
 }
 
 type DatabasesListParameters struct {
-	StartCursor string `json:"start_cursor,omitempty"`
-	PageSize    int32  `json:"page_size,omitempty"`
+	PaginationParameters
 }
 
 type DatabasesListResponse struct {
-	Results    []Database `json:"results"`
-	NextCursor string     `json:"next_cursor"`
-	HasMore    bool       `json:"has_more"`
+	PaginatedList
+	Results []Database `json:"results"`
 }
 
 type SortTimestamp string
@@ -823,16 +821,14 @@ type DatabasesQueryParameters struct {
 	Sorts []Sort `json:"sorts"`
 	// When supplied, returns a page of results starting after the cursor provided.
 	// If not supplied, this endpoint will return the first page of results.
-	StartCursor string `json:"start_cursor,omitempty"`
+	StartCursor string `json:"-" url:"start_cursor,omitempty"`
 	// The number of items from the full list desired in the response. Maximum: 100
-	PageSize int32 `json:"page_size"`
+	PageSize int32 `json:"-" url:"page_size,omitempty"`
 }
 
 type DatabasesQueryResponse struct {
-	Object     string `json:"object"`
-	Results    []Page `json:"results"`
-	NextCursor string `json:"next_cursor"`
-	HasMore    bool   `json:"has_more"`
+	PaginatedList
+	Results []Page `json:"results"`
 }
 
 type DatabasesInterface interface {

@@ -54,8 +54,8 @@ type SearchParameters struct {
 	Query       string       `json:"query"`
 	Sort        SearchSort   `json:"sort"`
 	Filter      SearchFilter `json:"filter"`
-	StartCursor string       `json:"start_cursor,omitempty"`
-	PageSize    int32        `json:"page_size"`
+	StartCursor string       `json:"-" url:"start_cursor,omitempty"`
+	PageSize    int32        `json:"-" url:"page_size,omitempty"`
 }
 
 type SearchableObject interface {
@@ -63,10 +63,8 @@ type SearchableObject interface {
 }
 
 type SearchResponse struct {
-	Object     string             `json:"object"`
-	Results    []SearchableObject `json:"results"`
-	HasMore    bool               `json:"has_more"`
-	NextCursor string             `json:"next_cursor"`
+	PaginatedList
+	Results []SearchableObject `json:"results"`
 }
 
 func (s *SearchResponse) UnmarshalJSON(data []byte) error {

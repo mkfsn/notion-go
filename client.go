@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/google/go-querystring/query"
 )
 
 var (
@@ -59,6 +61,11 @@ func newHTTPClient(clientOptions clientOptions) *httpClient {
 }
 
 func (c *httpClient) Request(ctx context.Context, method string, endpoint string, body interface{}) ([]byte, error) {
+	v, err := query.Values(body)
+	if err != nil {
+		return nil, err
+	}
+
 	b, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -68,6 +75,8 @@ func (c *httpClient) Request(ctx context.Context, method string, endpoint string
 	if err != nil {
 		return nil, err
 	}
+
+	req.URL.RawQuery = v.Encode()
 
 	if body != nil {
 		req.Header.Add("Content-Type", "application/json")
