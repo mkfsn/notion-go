@@ -12,6 +12,8 @@ type Block interface {
 	isBlock()
 }
 
+// FIXME: reduce function length
+// nolint:funlen
 func newBlock(data []byte) (Block, error) {
 	var base BlockBase
 
@@ -232,6 +234,7 @@ func (b *blocksClient) Children() BlocksChildrenInterface {
 	if b == nil {
 		return nil
 	}
+
 	return b.childrenClient
 }
 
@@ -268,6 +271,7 @@ func (b *BlocksChildrenListResponse) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+
 		b.Results = append(b.Results, block)
 	}
 

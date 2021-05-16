@@ -20,6 +20,8 @@ type Database struct {
 
 func (d Database) isSearchable() {}
 
+// FIXME: reduce the complexity
+// nolint:gocyclo,gocognit,funlen
 func (d *Database) UnmarshalJSON(data []byte) error {
 	type Alias Database
 
@@ -680,7 +682,7 @@ type NumberFilter struct {
 	IsNotEmpty           *bool    `json:"is_not_empty,omitempty"`
 }
 
-// SingleNumberFilter is a number filter condition applies to database properties of type "number"
+// SingleNumberFilter is a number filter condition applies to database properties of type "number".
 type SingleNumberFilter struct {
 	SinglePropertyFilter
 	Number NumberFilter `json:"number"`

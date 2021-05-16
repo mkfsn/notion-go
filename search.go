@@ -109,6 +109,9 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 			}
 
 			s.Results = append(s.Results, object)
+
+		case ObjectTypeBlock:
+			continue
 		}
 	}
 
