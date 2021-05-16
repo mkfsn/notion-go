@@ -60,7 +60,7 @@ type PageParentInput struct {
 
 type Page struct {
 	// Always "page".
-	Object string `json:"object"`
+	Object ObjectType `json:"object"`
 	// Unique identifier of the page.
 	ID string `json:"id"`
 	// The page's parent

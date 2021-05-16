@@ -9,8 +9,8 @@ import (
 )
 
 type Database struct {
-	Object string `json:"object"`
-	ID     string `json:"id"`
+	Object ObjectType `json:"object"`
+	ID     string     `json:"id"`
 
 	CreatedTime    time.Time           `json:"created_time"`
 	LastEditedTime time.Time           `json:"last_edited_time"`
@@ -39,7 +39,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 	d.Properties = make(map[string]Property)
 
 	for _, title := range alias.Title {
-		var base baseRichText
+		var base BaseRichText
 
 		if err := json.Unmarshal(title, &base); err != nil {
 			return err
@@ -279,7 +279,7 @@ type RichText interface {
 }
 
 func newRichText(data []byte) (RichText, error) {
-	var base baseRichText
+	var base BaseRichText
 
 	if err := json.Unmarshal(data, &base); err != nil {
 		return nil, err
@@ -325,30 +325,32 @@ const (
 	RichTextTypeEquation RichTextType = "equation"
 )
 
-type baseRichText struct {
+type BaseRichText struct {
 	// The plain text without annotations.
-	PlainText string `json:"plain_text"`
+	PlainText string `json:"plain_text,omitempty"`
 	// (Optional) The URL of any link or internal Notion mention in this text, if any.
-	Href string `json:"href"`
+	Href string `json:"href,omitempty"`
 	// Type of this rich text object.
 	Type RichTextType `json:"type"`
 	// All annotations that apply to this rich text.
 	// Annotations include colors and bold/italics/underline/strikethrough.
-	Annotations Annotations `json:"annotations"`
+	Annotations *Annotations `json:"annotations,omitempty"`
 }
 
-func (r baseRichText) isRichText() {}
+func (r BaseRichText) isRichText() {}
+
+type Link struct {
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
 
 type TextObject struct {
 	Content string `json:"content"`
-	Link    *struct {
-		Type string `json:"type"`
-		URL  string `json:"url"`
-	} `json:"link"`
+	Link    *Link  `json:"link,omitempty"`
 }
 
 type RichTextText struct {
-	baseRichText
+	BaseRichText
 	Text TextObject `json:"text"`
 }
 
@@ -387,7 +389,7 @@ type DateMention struct {
 }
 
 type RichTextMention struct {
-	baseRichText
+	BaseRichText
 	Mention Mention `json:"mention"`
 }
 
@@ -396,7 +398,7 @@ type EquationObject struct {
 }
 
 type RichTextEquation struct {
-	baseRichText
+	BaseRichText
 	Equation EquationObject `json:"equation"`
 }
 

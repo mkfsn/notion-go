@@ -84,7 +84,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 	for _, result := range alias.Results {
 		var base struct {
-			Object string `json:"object"`
+			Object ObjectType `json:"object"`
 		}
 
 		if err := json.Unmarshal(result, &base); err != nil {
@@ -92,7 +92,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 		}
 
 		switch base.Object {
-		case "page":
+		case ObjectTypePage:
 			var object Page
 
 			if err := json.Unmarshal(result, &object); err != nil {
@@ -101,7 +101,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 			s.Results = append(s.Results, object)
 
-		case "database":
+		case ObjectTypeDatabase:
 			var object Database
 
 			if err := json.Unmarshal(result, &object); err != nil {

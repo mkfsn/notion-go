@@ -1,5 +1,13 @@
 package notion
 
+type ObjectType string
+
+const (
+	ObjectTypeBlock    ObjectType = "block"
+	ObjectTypePage     ObjectType = "page"
+	ObjectTypeDatabase ObjectType = "database"
+)
+
 type PaginationParameters struct {
 	// If supplied, this endpoint will return a page of results starting after the cursor provided.
 	// If not supplied, this endpoint will return the first page of results.

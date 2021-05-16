@@ -3,7 +3,6 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -31,7 +30,7 @@ func newBlock(data []byte) (Block, error) {
 		return block, nil
 
 	case BlockTypeHeading1:
-		var block Heading3Block
+		var block Heading1Block
 
 		if err := json.Unmarshal(data, &block); err != nil {
 			return nil, err
@@ -40,7 +39,7 @@ func newBlock(data []byte) (Block, error) {
 		return block, nil
 
 	case BlockTypeHeading2:
-		var block Heading3Block
+		var block Heading2Block
 
 		if err := json.Unmarshal(data, &block); err != nil {
 			return nil, err
@@ -132,70 +131,83 @@ const (
 
 type BlockBase struct {
 	// Always "block".
-	Object string `json:"object"`
+	Object ObjectType `json:"object"`
 	// Identifier for the block.
-	ID string `json:"id"`
+	ID string `json:"id,omitempty"`
 	// Type of block.
 	Type BlockType `json:"type"`
 	// Date and time when this block was created. Formatted as an ISO 8601 date time string.
-	CreatedTime time.Time `json:"created_time"`
+	CreatedTime *time.Time `json:"created_time,omitempty"`
 	// Date and time when this block was last updated. Formatted as an ISO 8601 date time string.
-	LastEditedTime time.Time `json:"last_edited_time"`
+	LastEditedTime *time.Time `json:"last_edited_time,omitempty"`
 	// Whether or not the block has children blocks nested within it.
-	HasChildren bool `json:"has_children"`
+	HasChildren *bool `json:"has_children,omitempty"`
 }
 
 func (b BlockBase) isBlock() {}
 
 type ParagraphBlock struct {
 	BlockBase
-	Text     []RichText  `json:"text"`
-	Children []BlockBase `json:"children"`
+	Paragraph RichTextBlock `json:"paragraph"`
+}
+
+type HeadingBlock struct {
+	Text []RichText `json:"text"`
+}
+
+type Heading1Block struct {
+	BlockBase
+	Heading1 HeadingBlock `json:"heading_1"`
+}
+
+type Heading2Block struct {
+	BlockBase
+	Heading2 HeadingBlock `json:"heading_2"`
 }
 
 type Heading3Block struct {
 	BlockBase
-	Text []RichText `json:"text"`
+	Heading3 HeadingBlock `json:"heading_3"`
 }
 
-type HeadingTwoBlock struct {
-	BlockBase
-	Text []RichText `json:"text"`
-}
-
-type HeadingThreeBlock struct {
-	BlockBase
-	Text []RichText `json:"text"`
+type RichTextBlock struct {
+	Text     []RichText  `json:"text"`
+	Children []BlockBase `json:"children,omitempty"`
 }
 
 type BulletedListItemBlock struct {
 	BlockBase
-	Text     []RichText  `json:"text"`
-	Children []BlockBase `json:"children"`
+	BulletedListItem RichTextBlock `json:"bulleted_list_item"`
 }
 
 type NumberedListItemBlock struct {
 	BlockBase
-	Text     []RichText  `json:"text"`
-	Children []BlockBase `json:"children"`
+	NumberedListItem RichTextBlock `json:"numbered_list_item"`
 }
 
-type ToDoBlock struct {
-	BlockBase
+type RichTextWithCheckBlock struct {
 	Text     []RichText  `json:"text"`
 	Checked  bool        `json:"checked"`
 	Children []BlockBase `json:"children"`
 }
 
+type ToDoBlock struct {
+	BlockBase
+	ToDo RichTextWithCheckBlock `json:"todo"`
+}
+
 type ToggleBlock struct {
 	BlockBase
-	Text     []RichText  `json:"text"`
-	Children []BlockBase `json:"children"`
+	Toggle RichTextBlock `json:"toggle"`
+}
+
+type TitleBlock struct {
+	Title string `json:"title"`
 }
 
 type ChildPageBlock struct {
 	BlockBase
-	Title string `json:"title"`
+	ChildPage TitleBlock `json:"child_page"`
 }
 
 type UnsupportedBlock struct {
@@ -264,14 +276,24 @@ func (b *BlocksChildrenListResponse) UnmarshalJSON(data []byte) error {
 
 type BlocksChildrenAppendParameters struct {
 	// Identifier for a block
-	BlockID string
+	BlockID string `json:"-" url:"-"`
 	// Child content to append to a container block as an array of block objects
-	Children []Block `json:"children"`
+	Children []Block `json:"children"  url:"-"`
 }
 
 type BlocksChildrenAppendResponse struct {
-	// TODO: check if this is correct
-	BlockBase
+	Block
+}
+
+func (b *BlocksChildrenAppendResponse) UnmarshalJSON(data []byte) error {
+	block, err := newBlock(data)
+	if err != nil {
+		return err
+	}
+
+	b.Block = block
+
+	return nil
 }
 
 type BlocksChildrenInterface interface {
@@ -292,8 +314,6 @@ func newBlocksChildrenClient(client client) *blocksChildrenClient {
 func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenListParameters) (*BlocksChildrenListResponse, error) {
 	endpoint := strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)
 
-	fmt.Printf("endpoint: %s\n", endpoint)
-
 	data, err := b.client.Request(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -309,5 +329,18 @@ func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenLi
 }
 
 func (b *blocksChildrenClient) Append(ctx context.Context, params BlocksChildrenAppendParameters) (*BlocksChildrenAppendResponse, error) {
-	return nil, ErrUnimplemented
+	endpoint := strings.Replace(APIBlocksAppendChildrenEndpoint, "{block_id}", params.BlockID, 1)
+
+	data, err := b.client.Request(ctx, http.MethodPatch, endpoint, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var response BlocksChildrenAppendResponse
+
+	if err := json.Unmarshal(data, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
