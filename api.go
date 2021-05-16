@@ -2,6 +2,9 @@ package notion
 
 import (
 	"context"
+	"net/http"
+
+	"github.com/mkfsn/notion-go/rest"
 )
 
 const (
@@ -21,6 +24,16 @@ const (
 
 const (
 	DefaultNotionVersion = "2021-05-13"
+	DefaultUserAgent     = "mkfsn/notion-go"
+)
+
+var (
+	defaultSettings = apiSettings{
+		baseURL:       APIBaseURL,
+		notionVersion: DefaultNotionVersion,
+		userAgent:     DefaultUserAgent,
+		httpClient:    http.DefaultClient,
+	}
 )
 
 type API struct {
@@ -31,21 +44,26 @@ type API struct {
 	blocksClient    BlocksInterface
 }
 
-func New(setters ...ClientOption) *API {
-	options := defaultOptions
+func New(authToken string, setters ...APISetting) *API {
+	settings := defaultSettings
 
 	for _, setter := range setters {
-		setter(&options)
+		setter(&settings)
 	}
 
-	client := newHTTPClient(options)
+	restClient := rest.New().
+		BearerToken(authToken).
+		BaseURL(settings.baseURL).
+		UserAgent(settings.userAgent).
+		Client(settings.httpClient).
+		Header("Notion-Version", settings.notionVersion)
 
 	return &API{
-		searchClient:    newSearchClient(client),
-		usersClient:     newUsersClient(client),
-		databasesClient: newDatabasesClient(client),
-		pagesClient:     newPagesClient(client),
-		blocksClient:    newBlocksClient(client),
+		searchClient:    newSearchClient(restClient),
+		usersClient:     newUsersClient(restClient),
+		databasesClient: newDatabasesClient(restClient),
+		pagesClient:     newPagesClient(restClient),
+		blocksClient:    newBlocksClient(restClient),
 	}
 }
 
@@ -87,4 +105,37 @@ func (c *API) Search(ctx context.Context, params SearchParameters) (*SearchRespo
 	}
 
 	return c.searchClient.Search(ctx, params)
+}
+
+type apiSettings struct {
+	baseURL       string
+	notionVersion string
+	userAgent     string
+	httpClient    *http.Client
+}
+
+type APISetting func(o *apiSettings)
+
+func WithBaseURL(baseURL string) APISetting {
+	return func(o *apiSettings) {
+		o.baseURL = baseURL
+	}
+}
+
+func WithNotionVersion(notionVersion string) APISetting {
+	return func(o *apiSettings) {
+		o.notionVersion = notionVersion
+	}
+}
+
+func WithUserAgent(userAgent string) APISetting {
+	return func(o *apiSettings) {
+		o.userAgent = userAgent
+	}
+}
+
+func WithHTTPClient(httpClient *http.Client) APISetting {
+	return func(o *apiSettings) {
+		o.httpClient = httpClient
+	}
 }

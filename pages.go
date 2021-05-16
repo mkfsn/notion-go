@@ -3,10 +3,10 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"strings"
 	"time"
 
+	"github.com/mkfsn/notion-go/rest"
 	"github.com/mkfsn/notion-go/typed"
 )
 
@@ -642,60 +642,50 @@ type PagesInterface interface {
 }
 
 type pagesClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newPagesClient(client client) *pagesClient {
+func newPagesClient(restClient rest.Interface) *pagesClient {
 	return &pagesClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (p *pagesClient) Retrieve(ctx context.Context, params PagesRetrieveParameters) (*PagesRetrieveResponse, error) {
-	endpoint := strings.Replace(APIPagesRetrieveEndpoint, "{page_id}", params.PageID, 1)
+	var result PagesRetrieveResponse
+	var failure HTTPError
 
-	b, err := p.client.Request(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
+	err := p.restClient.New().Get().
+		Endpoint(strings.Replace(APIPagesRetrieveEndpoint, "{page_id}", params.PageID, 1)).
+		QueryStruct(params).
+		BodyJSON(nil).
+		Receive(ctx, &result, &failure)
 
-	var response PagesRetrieveResponse
-
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
 
 func (p *pagesClient) Update(ctx context.Context, params PagesUpdateParameters) (*PagesUpdateResponse, error) {
-	endpoint := strings.Replace(APIPagesUpdateEndpoint, "{page_id}", params.PageID, 1)
+	var result PagesUpdateResponse
+	var failure HTTPError
 
-	b, err := p.client.Request(ctx, http.MethodPatch, endpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	err := p.restClient.New().Patch().
+		Endpoint(strings.Replace(APIPagesUpdateEndpoint, "{page_id}", params.PageID, 1)).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	var response PagesUpdateResponse
-
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
 
 func (p *pagesClient) Create(ctx context.Context, params PagesCreateParameters) (*PagesCreateResponse, error) {
-	b, err := p.client.Request(ctx, http.MethodPost, APIPagesCreateEndpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	var result PagesCreateResponse
+	var failure HTTPError
 
-	var response PagesCreateResponse
+	err := p.restClient.New().Post().
+		Endpoint(APIPagesCreateEndpoint).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }

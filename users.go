@@ -3,9 +3,9 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"strings"
 
+	"github.com/mkfsn/notion-go/rest"
 	"github.com/mkfsn/notion-go/typed"
 )
 
@@ -121,43 +121,37 @@ type UsersInterface interface {
 }
 
 type usersClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newUsersClient(client client) *usersClient {
+func newUsersClient(restClient rest.Interface) *usersClient {
 	return &usersClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (u *usersClient) Retrieve(ctx context.Context, params UsersRetrieveParameters) (*UsersRetrieveResponse, error) {
-	endpoint := strings.Replace(APIUsersRetrieveEndpoint, "{user_id}", params.UserID, 1)
+	var result UsersRetrieveResponse
+	var failure HTTPError
 
-	b, err := u.client.Request(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
+	err := u.restClient.New().Get().
+		Endpoint(strings.Replace(APIUsersRetrieveEndpoint, "{user_id}", params.UserID, 1)).
+		QueryStruct(params).
+		BodyJSON(nil).
+		Receive(ctx, &result, &failure)
 
-	var response UsersRetrieveResponse
-
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
 
 func (u *usersClient) List(ctx context.Context, params UsersListParameters) (*UsersListResponse, error) {
-	b, err := u.client.Request(ctx, http.MethodGet, APIUsersListEndpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	var result UsersListResponse
+	var failure HTTPError
 
-	var response UsersListResponse
+	err := u.restClient.New().Get().
+		Endpoint(APIUsersListEndpoint).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }

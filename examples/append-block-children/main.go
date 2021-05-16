@@ -6,10 +6,11 @@ import (
 	"os"
 
 	"github.com/mkfsn/notion-go"
+	"github.com/mkfsn/notion-go/typed"
 )
 
 func main() {
-	c := notion.New(notion.WithAuthToken(os.Getenv("NOTION_AUTH_TOKEN")))
+	c := notion.New(os.Getenv("NOTION_AUTH_TOKEN"))
 
 	resp, err := c.Blocks().Children().Append(context.Background(),
 		notion.BlocksChildrenAppendParameters{
@@ -17,14 +18,14 @@ func main() {
 			Children: []notion.Block{
 				notion.Heading2Block{
 					BlockBase: notion.BlockBase{
-						Object: notion.ObjectTypeBlock,
-						Type:   notion.BlockTypeHeading2,
+						Object: typed.ObjectTypeBlock,
+						Type:   typed.BlockTypeHeading2,
 					},
 					Heading2: notion.HeadingBlock{
 						Text: []notion.RichText{
 							notion.RichTextText{
 								BaseRichText: notion.BaseRichText{
-									Type: notion.RichTextTypeText,
+									Type: typed.RichTextTypeText,
 								},
 								Text: notion.TextObject{
 									Content: "Lacinato kale",
@@ -36,14 +37,14 @@ func main() {
 
 				notion.ParagraphBlock{
 					BlockBase: notion.BlockBase{
-						Object: notion.ObjectTypeBlock,
-						Type:   notion.BlockTypeParagraph,
+						Object: typed.ObjectTypeBlock,
+						Type:   typed.BlockTypeParagraph,
 					},
 					Paragraph: notion.RichTextBlock{
 						Text: []notion.RichText{
 							notion.RichTextText{
 								BaseRichText: notion.BaseRichText{
-									Type: notion.RichTextTypeText,
+									Type: typed.RichTextTypeText,
 								},
 								Text: notion.TextObject{
 									Content: "Lacinato kale is a variety of kale with a long tradition in Italian cuisine, especially that of Tuscany. It is also known as Tuscan kale, Italian kale, dinosaur kale, kale, flat back kale, palm tree kale, or black Tuscan palm.",

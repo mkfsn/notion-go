@@ -6,10 +6,11 @@ import (
 	"os"
 
 	"github.com/mkfsn/notion-go"
+	"github.com/mkfsn/notion-go/typed"
 )
 
 func main() {
-	c := notion.New(notion.WithAuthToken(os.Getenv("NOTION_AUTH_TOKEN")))
+	c := notion.New(os.Getenv("NOTION_AUTH_TOKEN"))
 
 	keyword := "medium.com"
 
@@ -30,7 +31,7 @@ func main() {
 		Sorts: []notion.Sort{
 			{
 				Property:  "Created",
-				Direction: notion.SortDirectionAscending,
+				Direction: typed.SortDirectionAscending,
 			},
 		},
 	})

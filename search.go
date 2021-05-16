@@ -3,8 +3,8 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 
+	"github.com/mkfsn/notion-go/rest"
 	"github.com/mkfsn/notion-go/typed"
 )
 
@@ -99,26 +99,25 @@ type SearchInterface interface {
 }
 
 type searchClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newSearchClient(client client) *searchClient {
+func newSearchClient(restClient rest.Interface) *searchClient {
 	return &searchClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (s *searchClient) Search(ctx context.Context, params SearchParameters) (*SearchResponse, error) {
-	b, err := s.client.Request(ctx, http.MethodPost, APISearchEndpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	var result SearchResponse
+	var failure HTTPError
 
-	var response SearchResponse
+	err := s.restClient.New().
+		Post().
+		Endpoint(APISearchEndpoint).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }

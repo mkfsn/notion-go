@@ -3,10 +3,10 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"strings"
 	"time"
 
+	"github.com/mkfsn/notion-go/rest"
 	"github.com/mkfsn/notion-go/typed"
 )
 
@@ -761,60 +761,50 @@ type DatabasesInterface interface {
 }
 
 type databasesClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newDatabasesClient(client client) *databasesClient {
+func newDatabasesClient(restClient rest.Interface) *databasesClient {
 	return &databasesClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (d *databasesClient) Retrieve(ctx context.Context, params DatabasesRetrieveParameters) (*DatabasesRetrieveResponse, error) {
-	endpoint := strings.Replace(APIDatabasesRetrieveEndpoint, "{database_id}", params.DatabaseID, 1)
+	var result DatabasesRetrieveResponse
+	var failure HTTPError
 
-	b, err := d.client.Request(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
+	err := d.restClient.New().Get().
+		Endpoint(strings.Replace(APIDatabasesRetrieveEndpoint, "{database_id}", params.DatabaseID, 1)).
+		QueryStruct(params).
+		BodyJSON(nil).
+		Receive(ctx, &result, &failure)
 
-	var response DatabasesRetrieveResponse
-
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
 
 func (d *databasesClient) List(ctx context.Context, params DatabasesListParameters) (*DatabasesListResponse, error) {
-	b, err := d.client.Request(ctx, http.MethodGet, APIDatabasesListEndpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	var result DatabasesListResponse
+	var failure HTTPError
 
-	var response DatabasesListResponse
+	err := d.restClient.New().Get().
+		Endpoint(APIDatabasesListEndpoint).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
 
 func (d *databasesClient) Query(ctx context.Context, params DatabasesQueryParameters) (*DatabasesQueryResponse, error) {
-	endpoint := strings.Replace(APIDatabasesQueryEndpoint, "{database_id}", params.DatabaseID, 1)
+	var result DatabasesQueryResponse
+	var failure HTTPError
 
-	b, err := d.client.Request(ctx, http.MethodPost, endpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	err := d.restClient.New().Post().
+		Endpoint(strings.Replace(APIDatabasesQueryEndpoint, "{database_id}", params.DatabaseID, 1)).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	var response DatabasesQueryResponse
-
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }

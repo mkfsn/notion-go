@@ -6,20 +6,21 @@ import (
 	"os"
 
 	"github.com/mkfsn/notion-go"
+	"github.com/mkfsn/notion-go/typed"
 )
 
 func main() {
-	c := notion.New(notion.WithAuthToken(os.Getenv("NOTION_AUTH_TOKEN")))
+	c := notion.New(os.Getenv("NOTION_AUTH_TOKEN"))
 
 	resp, err := c.Search(context.Background(), notion.SearchParameters{
 		Query: "フィリスのアトリエ",
 		Sort: notion.SearchSort{
-			Direction: notion.SearchSortDirectionAscending,
-			Timestamp: notion.SearchSortTimestampLastEditedTime,
+			Direction: typed.SearchSortDirectionAscending,
+			Timestamp: typed.SearchSortTimestampLastEditedTime,
 		},
 		Filter: notion.SearchFilter{
-			Property: notion.SearchFilterPropertyObject,
-			Value:    notion.SearchFilterValuePage,
+			Property: typed.SearchFilterPropertyObject,
+			Value:    typed.SearchFilterValuePage,
 		},
 	})
 	if err != nil {

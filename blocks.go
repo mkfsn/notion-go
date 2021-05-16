@@ -3,10 +3,10 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"strings"
 	"time"
 
+	"github.com/mkfsn/notion-go/rest"
 	"github.com/mkfsn/notion-go/typed"
 )
 
@@ -211,9 +211,9 @@ type blocksClient struct {
 	childrenClient *blocksChildrenClient
 }
 
-func newBlocksClient(client client) *blocksClient {
+func newBlocksClient(restClient rest.Interface) *blocksClient {
 	return &blocksClient{
-		childrenClient: newBlocksChildrenClient(client),
+		childrenClient: newBlocksChildrenClient(restClient),
 	}
 }
 
@@ -293,45 +293,37 @@ type BlocksChildrenInterface interface {
 }
 
 type blocksChildrenClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newBlocksChildrenClient(client client) *blocksChildrenClient {
+func newBlocksChildrenClient(restClient rest.Interface) *blocksChildrenClient {
 	return &blocksChildrenClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenListParameters) (*BlocksChildrenListResponse, error) {
-	endpoint := strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)
+	var result BlocksChildrenListResponse
+	var failure HTTPError
 
-	data, err := b.client.Request(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
+	err := b.restClient.New().Get().
+		Endpoint(strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)).
+		QueryStruct(params).
+		BodyJSON(nil).
+		Receive(ctx, &result, &failure)
 
-	var response BlocksChildrenListResponse
-
-	if err := json.Unmarshal(data, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
 
 func (b *blocksChildrenClient) Append(ctx context.Context, params BlocksChildrenAppendParameters) (*BlocksChildrenAppendResponse, error) {
-	endpoint := strings.Replace(APIBlocksAppendChildrenEndpoint, "{block_id}", params.BlockID, 1)
+	var result BlocksChildrenAppendResponse
+	var failure HTTPError
 
-	data, err := b.client.Request(ctx, http.MethodPatch, endpoint, params)
-	if err != nil {
-		return nil, err
-	}
+	err := b.restClient.New().Patch().
+		Endpoint(strings.Replace(APIBlocksAppendChildrenEndpoint, "{block_id}", params.BlockID, 1)).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
 
-	var response BlocksChildrenAppendResponse
-
-	if err := json.Unmarshal(data, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err
 }
