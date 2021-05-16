@@ -18,6 +18,36 @@ type User interface {
 	isUser()
 }
 
+func newUser(data []byte) (User, error) {
+	var base baseUser
+
+	if err := json.Unmarshal(data, &base); err != nil {
+		return nil, err
+	}
+
+	switch base.Type {
+	case UserTypePerson:
+		var user PersonUser
+
+		if err := json.Unmarshal(data, &user); err != nil {
+			return nil, err
+		}
+
+		return user, nil
+
+	case UserTypeBot:
+		var user BotUser
+
+		if err := json.Unmarshal(data, &user); err != nil {
+			return nil, err
+		}
+
+		return user, nil
+	}
+
+	return nil, ErrUnknown
+}
+
 type baseUser struct {
 	Object    string   `json:"object"`
 	ID        string   `json:"id"`
@@ -48,34 +78,9 @@ type UsersRetrieveResponse struct {
 	User
 }
 
-func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) error {
-	var base baseUser
-
-	if err := json.Unmarshal(data, &base); err != nil {
-		return err
-	}
-
-	switch base.Type {
-	case UserTypePerson:
-		var user PersonUser
-
-		if err := json.Unmarshal(data, &user); err != nil {
-			return err
-		}
-
-		u.User = user
-
-	case UserTypeBot:
-		var user BotUser
-
-		if err := json.Unmarshal(data, &user); err != nil {
-			return err
-		}
-
-		u.User = user
-	}
-
-	return nil
+func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) (err error) {
+	u.User, err = newUser(data)
+	return
 }
 
 type UsersListParameters struct {
@@ -104,31 +109,12 @@ func (u *UsersListResponse) UnmarshalJSON(data []byte) error {
 	u.Results = make([]User, 0, len(alias.Results))
 
 	for _, result := range alias.Results {
-		var base baseUser
-
-		if err := json.Unmarshal(result, &base); err != nil {
+		user, err := newUser(result)
+		if err != nil {
 			return err
 		}
 
-		switch base.Type {
-		case UserTypePerson:
-			var user PersonUser
-
-			if err := json.Unmarshal(result, &user); err != nil {
-				return err
-			}
-
-			u.Results = append(u.Results, user)
-
-		case UserTypeBot:
-			var user BotUser
-
-			if err := json.Unmarshal(result, &user); err != nil {
-				return err
-			}
-
-			u.Results = append(u.Results, user)
-		}
+		u.Results = append(u.Results, user)
 	}
 
 	return nil
