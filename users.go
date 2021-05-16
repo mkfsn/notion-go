@@ -5,13 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-)
 
-type UserType = string
-
-const (
-	UserTypePerson UserType = "person"
-	UserTypeBot    UserType = "bot"
+	"github.com/mkfsn/notion-go/typed"
 )
 
 type User interface {
@@ -26,7 +21,7 @@ func newUser(data []byte) (User, error) {
 	}
 
 	switch base.Type {
-	case UserTypePerson:
+	case typed.UserTypePerson:
 		var user PersonUser
 
 		if err := json.Unmarshal(data, &user); err != nil {
@@ -35,7 +30,7 @@ func newUser(data []byte) (User, error) {
 
 		return user, nil
 
-	case UserTypeBot:
+	case typed.UserTypeBot:
 		var user BotUser
 
 		if err := json.Unmarshal(data, &user); err != nil {
@@ -49,11 +44,11 @@ func newUser(data []byte) (User, error) {
 }
 
 type baseUser struct {
-	Object    string   `json:"object"`
-	ID        string   `json:"id"`
-	Type      UserType `json:"type"`
-	Name      string   `json:"name"`
-	AvatarURL string   `json:"avatar_url"`
+	Object    string         `json:"object"`
+	ID        string         `json:"id"`
+	Type      typed.UserType `json:"type"`
+	Name      string         `json:"name"`
+	AvatarURL string         `json:"avatar_url"`
 }
 
 func (b baseUser) isUser() {}

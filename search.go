@@ -4,50 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-)
 
-type SearchFilterValue string
-
-const (
-	SearchFilterValuePage     SearchFilterValue = "page"
-	SearchFilterValueDatabase SearchFilterValue = "database"
-)
-
-type SearchFilterProperty string
-
-const (
-	SearchFilterPropertyObject SearchFilterProperty = "object"
+	"github.com/mkfsn/notion-go/typed"
 )
 
 type SearchFilter struct {
 	// The value of the property to filter the results by. Possible values for object type include `page` or `database`.
 	// Limitation: Currently the only filter allowed is object which will filter by type of `object`
 	// (either `page` or `database`)
-	Value SearchFilterValue `json:"value"`
+	Value typed.SearchFilterValue `json:"value"`
 	// The name of the property to filter by. Currently the only property you can filter by is the object type.
 	// Possible values include `object`. Limitation: Currently the only filter allowed is `object` which will
 	// filter by type of object (either `page` or `database`)
-	Property SearchFilterProperty `json:"property"`
+	Property typed.SearchFilterProperty `json:"property"`
 }
-
-type SearchSortDirection string
-
-const (
-	SearchSortDirectionAscending  SearchSortDirection = "ascending"
-	SearchSortDirectionDescending SearchSortDirection = " descending"
-)
-
-type SearchSortTimestamp string
-
-const (
-	SearchSortTimestampLastEditedTime SearchSortTimestamp = "last_edited_time"
-)
 
 type SearchSort struct {
 	// The direction to sort.
-	Direction SearchSortDirection `json:"direction"`
+	Direction typed.SearchSortDirection `json:"direction"`
 	// The name of the timestamp to sort against. Possible values include `last_edited_time`.
-	Timestamp SearchSortTimestamp `json:"timestamp"`
+	Timestamp typed.SearchSortTimestamp `json:"timestamp"`
 }
 
 type SearchParameters struct {
@@ -84,7 +60,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 	for _, result := range alias.Results {
 		var base struct {
-			Object ObjectType `json:"object"`
+			Object typed.ObjectType `json:"object"`
 		}
 
 		if err := json.Unmarshal(result, &base); err != nil {
@@ -92,7 +68,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 		}
 
 		switch base.Object {
-		case ObjectTypePage:
+		case typed.ObjectTypePage:
 			var object Page
 
 			if err := json.Unmarshal(result, &object); err != nil {
@@ -101,7 +77,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 			s.Results = append(s.Results, object)
 
-		case ObjectTypeDatabase:
+		case typed.ObjectTypeDatabase:
 			var object Database
 
 			if err := json.Unmarshal(result, &object); err != nil {
@@ -110,7 +86,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 			s.Results = append(s.Results, object)
 
-		case ObjectTypeBlock:
+		case typed.ObjectTypeBlock:
 			continue
 		}
 	}

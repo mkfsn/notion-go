@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/mkfsn/notion-go/typed"
 )
 
 type Block interface {
@@ -22,7 +24,7 @@ func newBlock(data []byte) (Block, error) {
 	}
 
 	switch base.Type {
-	case BlockTypeParagraph:
+	case typed.BlockTypeParagraph:
 		var block ParagraphBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -31,7 +33,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeHeading1:
+	case typed.BlockTypeHeading1:
 		var block Heading1Block
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -40,7 +42,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeHeading2:
+	case typed.BlockTypeHeading2:
 		var block Heading2Block
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -49,7 +51,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeHeading3:
+	case typed.BlockTypeHeading3:
 		var block Heading3Block
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -58,7 +60,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeBulletedListItem:
+	case typed.BlockTypeBulletedListItem:
 		var block BulletedListItemBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -67,7 +69,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeNumberedListItem:
+	case typed.BlockTypeNumberedListItem:
 		var block NumberedListItemBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -76,7 +78,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeToDo:
+	case typed.BlockTypeToDo:
 		var block ToDoBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -85,7 +87,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeToggle:
+	case typed.BlockTypeToggle:
 		var block ToggleBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -94,7 +96,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeChildPage:
+	case typed.BlockTypeChildPage:
 		var block ChildPageBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -103,7 +105,7 @@ func newBlock(data []byte) (Block, error) {
 
 		return block, nil
 
-	case BlockTypeUnsupported:
+	case typed.BlockTypeUnsupported:
 		var block UnsupportedBlock
 
 		if err := json.Unmarshal(data, &block); err != nil {
@@ -116,28 +118,13 @@ func newBlock(data []byte) (Block, error) {
 	return nil, ErrUnknown
 }
 
-type BlockType string
-
-const (
-	BlockTypeParagraph        BlockType = "paragraph"
-	BlockTypeHeading1         BlockType = "heading_1"
-	BlockTypeHeading2         BlockType = "heading_2"
-	BlockTypeHeading3         BlockType = "heading_3"
-	BlockTypeBulletedListItem BlockType = "bulleted_list_item"
-	BlockTypeNumberedListItem BlockType = "numbered_list_item"
-	BlockTypeToDo             BlockType = "to_do"
-	BlockTypeToggle           BlockType = "toggle"
-	BlockTypeChildPage        BlockType = "child_page"
-	BlockTypeUnsupported      BlockType = "unsupported"
-)
-
 type BlockBase struct {
 	// Always "block".
-	Object ObjectType `json:"object"`
+	Object typed.ObjectType `json:"object"`
 	// Identifier for the block.
 	ID string `json:"id,omitempty"`
 	// Type of block.
-	Type BlockType `json:"type"`
+	Type typed.BlockType `json:"type"`
 	// Date and time when this block was created. Formatted as an ISO 8601 date time string.
 	CreatedTime *time.Time `json:"created_time,omitempty"`
 	// Date and time when this block was last updated. Formatted as an ISO 8601 date time string.

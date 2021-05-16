@@ -13,6 +13,12 @@ which is written in JavaScript.
 go get -u github.com/mkfsn/notion-go
 ```
 
+## Usage
+
+```go
+
+```
+
 ## Supported Features
 
 This client supports all endpoints in the [Notion API](https://developers.notion.com/reference/intro).

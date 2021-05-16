@@ -6,22 +6,16 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/mkfsn/notion-go/typed"
 )
 
 type Parent interface {
 	isParent()
 }
 
-type ParentType string
-
-const (
-	ParentTypeDatabase  ParentType = "database_id"
-	ParentTypePage      ParentType = "page"
-	ParentTypeWorkspace ParentType = "workspace"
-)
-
 type baseParent struct {
-	Type ParentType `json:"type"`
+	Type typed.ParentType `json:"type"`
 }
 
 func (b baseParent) isParent() {}
@@ -60,7 +54,7 @@ type PageParentInput struct {
 
 type Page struct {
 	// Always "page".
-	Object ObjectType `json:"object"`
+	Object typed.ObjectType `json:"object"`
 	// Unique identifier of the page.
 	ID string `json:"id"`
 	// The page's parent
@@ -99,7 +93,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 	}
 
 	switch baseParent.Type {
-	case ParentTypeDatabase:
+	case typed.ParentTypeDatabase:
 		var parent DatabaseParent
 
 		if err := json.Unmarshal(alias.Parent, &parent); err != nil {
@@ -108,7 +102,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 		p.Parent = parent
 
-	case ParentTypePage:
+	case typed.ParentTypePage:
 		var parent PageParent
 
 		if err := json.Unmarshal(alias.Parent, &parent); err != nil {
@@ -117,7 +111,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 		p.Parent = parent
 
-	case ParentTypeWorkspace:
+	case typed.ParentTypeWorkspace:
 		var parent WorkspaceParent
 
 		if err := json.Unmarshal(alias.Parent, &parent); err != nil {
@@ -137,7 +131,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 		}
 
 		switch base.Type {
-		case PropertyValueTypeRichText:
+		case typed.PropertyValueTypeRichText:
 			var property RichTextPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -146,7 +140,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeNumber:
+		case typed.PropertyValueTypeNumber:
 			var property NumberPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -155,7 +149,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeSelect:
+		case typed.PropertyValueTypeSelect:
 			var property SelectPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -164,7 +158,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeMultiSelect:
+		case typed.PropertyValueTypeMultiSelect:
 			var property MultiSelectPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -173,7 +167,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeDate:
+		case typed.PropertyValueTypeDate:
 			var property DatePropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -182,7 +176,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeFormula:
+		case typed.PropertyValueTypeFormula:
 			var property FormulaPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -191,7 +185,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeRollup:
+		case typed.PropertyValueTypeRollup:
 			var property RollupPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -200,7 +194,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeTitle:
+		case typed.PropertyValueTypeTitle:
 			var property TitlePropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -209,7 +203,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypePeople:
+		case typed.PropertyValueTypePeople:
 			var property PeoplePropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -218,7 +212,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeFiles:
+		case typed.PropertyValueTypeFiles:
 			var property FilesPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -227,7 +221,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeCheckbox:
+		case typed.PropertyValueTypeCheckbox:
 			var property CheckboxPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -236,7 +230,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeURL:
+		case typed.PropertyValueTypeURL:
 			var property URLPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -245,7 +239,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeEmail:
+		case typed.PropertyValueTypeEmail:
 			var property EmailPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -254,7 +248,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypePhoneNumber:
+		case typed.PropertyValueTypePhoneNumber:
 			var property PhoneNumberPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -263,7 +257,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeCreatedTime:
+		case typed.PropertyValueTypeCreatedTime:
 			var property CreatedTimePropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -272,7 +266,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeCreatedBy:
+		case typed.PropertyValueTypeCreatedBy:
 			var property CreatedByPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -281,7 +275,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeLastEditedTime:
+		case typed.PropertyValueTypeLastEditedTime:
 			var property LastEditedTimePropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -290,7 +284,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 			p.Properties[name] = property
 
-		case PropertyValueTypeLastEditedBy:
+		case typed.PropertyValueTypeLastEditedBy:
 			var property LastEditedByPropertyValue
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -310,36 +304,13 @@ type PropertyValue interface {
 	isPropertyValue()
 }
 
-type PropertyValueType string
-
-const (
-	PropertyValueTypeRichText       PropertyValueType = "rich_text"
-	PropertyValueTypeNumber         PropertyValueType = "number"
-	PropertyValueTypeSelect         PropertyValueType = "select"
-	PropertyValueTypeMultiSelect    PropertyValueType = "multi_select"
-	PropertyValueTypeDate           PropertyValueType = "date"
-	PropertyValueTypeFormula        PropertyValueType = "formula"
-	PropertyValueTypeRollup         PropertyValueType = "rollup"
-	PropertyValueTypeTitle          PropertyValueType = "title"
-	PropertyValueTypePeople         PropertyValueType = "people"
-	PropertyValueTypeFiles          PropertyValueType = "files"
-	PropertyValueTypeCheckbox       PropertyValueType = "checkbox"
-	PropertyValueTypeURL            PropertyValueType = "url"
-	PropertyValueTypeEmail          PropertyValueType = "email"
-	PropertyValueTypePhoneNumber    PropertyValueType = "phone_number"
-	PropertyValueTypeCreatedTime    PropertyValueType = "created_time"
-	PropertyValueTypeCreatedBy      PropertyValueType = "created_by"
-	PropertyValueTypeLastEditedTime PropertyValueType = "last_edited_time"
-	PropertyValueTypeLastEditedBy   PropertyValueType = "last_edited_by"
-)
-
 type basePropertyValue struct {
 	// Underlying identifier for the property. This identifier is guaranteed to remain constant when the property name changes.
 	// It may be a UUID, but is often a short random string.
 	// The id may be used in place of name when creating or updating pages.
 	ID string `json:"id,omitempty"`
 	// Type of the property
-	Type PropertyValueType `json:"type,omitempty"`
+	Type typed.PropertyValueType `json:"type,omitempty"`
 }
 
 func (p basePropertyValue) isPropertyValue() {}
@@ -416,9 +387,9 @@ type NumberPropertyValue struct {
 }
 
 type SelectPropertyValueOption struct {
-	ID    string `json:"id,omitempty"`
-	Name  string `json:"name"`
-	Color Color  `json:"color,omitempty"`
+	ID    string      `json:"id,omitempty"`
+	Name  string      `json:"name"`
+	Color typed.Color `json:"color,omitempty"`
 }
 
 type SelectPropertyValue struct {
@@ -427,9 +398,9 @@ type SelectPropertyValue struct {
 }
 
 type MultiSelectPropertyValueOption struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Color Color  `json:"color"`
+	ID    string      `json:"id"`
+	Name  string      `json:"name"`
+	Color typed.Color `json:"color"`
 }
 
 type MultiSelectPropertyValue struct {
@@ -457,7 +428,7 @@ func newFormulaValueType(data []byte) (FormulaValue, error) {
 	}
 
 	switch base.Type {
-	case FormulaValueTypeString:
+	case typed.FormulaValueTypeString:
 		var formulaValue StringFormulaValue
 
 		if err := json.Unmarshal(data, &formulaValue); err != nil {
@@ -466,7 +437,7 @@ func newFormulaValueType(data []byte) (FormulaValue, error) {
 
 		return formulaValue, nil
 
-	case FormulaValueTypeNumber:
+	case typed.FormulaValueTypeNumber:
 		var formulaValue NumberFormulaValue
 
 		if err := json.Unmarshal(data, &formulaValue); err != nil {
@@ -475,7 +446,7 @@ func newFormulaValueType(data []byte) (FormulaValue, error) {
 
 		return formulaValue, nil
 
-	case FormulaValueTypeBoolean:
+	case typed.FormulaValueTypeBoolean:
 		var formulaValue BooleanFormulaValue
 
 		if err := json.Unmarshal(data, &formulaValue); err != nil {
@@ -484,7 +455,7 @@ func newFormulaValueType(data []byte) (FormulaValue, error) {
 
 		return formulaValue, nil
 
-	case FormulaValueTypeDate:
+	case typed.FormulaValueTypeDate:
 		var formulaValue DateFormulaValue
 
 		if err := json.Unmarshal(data, &formulaValue); err != nil {
@@ -497,17 +468,8 @@ func newFormulaValueType(data []byte) (FormulaValue, error) {
 	return nil, ErrUnknown
 }
 
-type FormulaValueType string
-
-const (
-	FormulaValueTypeString  FormulaValueType = "string"
-	FormulaValueTypeNumber  FormulaValueType = "number"
-	FormulaValueTypeBoolean FormulaValueType = "boolean"
-	FormulaValueTypeDate    FormulaValueType = "date"
-)
-
 type baseFormulaValue struct {
-	Type FormulaValueType `json:"type"`
+	Type typed.FormulaValueType `json:"type"`
 }
 
 func (b baseFormulaValue) isFormulaValue() {}

@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/mkfsn/notion-go/typed"
 )
 
 type Database struct {
-	Object ObjectType `json:"object"`
-	ID     string     `json:"id"`
+	Object typed.ObjectType `json:"object"`
+	ID     string           `json:"id"`
 
 	CreatedTime    time.Time           `json:"created_time"`
 	LastEditedTime time.Time           `json:"last_edited_time"`
@@ -48,7 +50,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 		}
 
 		switch base.Type {
-		case RichTextTypeText:
+		case typed.RichTextTypeText:
 			var richText RichTextText
 
 			if err := json.Unmarshal(title, &richText); err != nil {
@@ -57,7 +59,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Title = append(d.Title, richText)
 
-		case RichTextTypeMention:
+		case typed.RichTextTypeMention:
 			var richText RichTextMention
 
 			if err := json.Unmarshal(title, &richText); err != nil {
@@ -66,7 +68,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Title = append(d.Title, richText)
 
-		case RichTextTypeEquation:
+		case typed.RichTextTypeEquation:
 			var richText RichTextEquation
 
 			if err := json.Unmarshal(title, &richText); err != nil {
@@ -85,7 +87,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 		}
 
 		switch base.Type {
-		case PropertyTypeTitle:
+		case typed.PropertyTypeTitle:
 			var property TitleProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -94,7 +96,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeRichText:
+		case typed.PropertyTypeRichText:
 			var property RichTextProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -103,7 +105,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeNumber:
+		case typed.PropertyTypeNumber:
 			var property NumberProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -112,7 +114,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeSelect:
+		case typed.PropertyTypeSelect:
 			var property SelectProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -121,7 +123,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeMultiSelect:
+		case typed.PropertyTypeMultiSelect:
 			var property MultiSelectProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -130,7 +132,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeDate:
+		case typed.PropertyTypeDate:
 			var property DateProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -139,7 +141,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypePeople:
+		case typed.PropertyTypePeople:
 			var property PeopleProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -148,7 +150,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeFile:
+		case typed.PropertyTypeFile:
 			var property FileProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -157,7 +159,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeCheckbox:
+		case typed.PropertyTypeCheckbox:
 			var property CheckboxProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -166,7 +168,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeURL:
+		case typed.PropertyTypeURL:
 			var property URLProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -175,7 +177,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeEmail:
+		case typed.PropertyTypeEmail:
 			var property EmailProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -184,7 +186,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypePhoneNumber:
+		case typed.PropertyTypePhoneNumber:
 			var property PhoneNumberProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -193,7 +195,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeFormula:
+		case typed.PropertyTypeFormula:
 			var property FormulaProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -202,7 +204,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeRelation:
+		case typed.PropertyTypeRelation:
 			var property RelationProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -211,7 +213,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeRollup:
+		case typed.PropertyTypeRollup:
 			var property RollupProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -220,7 +222,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeCreatedTime:
+		case typed.PropertyTypeCreatedTime:
 			var property CreatedTimeProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -229,7 +231,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeCreatedBy:
+		case typed.PropertyTypeCreatedBy:
 			var property CreatedByProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -238,7 +240,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeLastEditedTime:
+		case typed.PropertyTypeLastEditedTime:
 			var property LastEditedTimeProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -247,7 +249,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 			d.Properties[name] = property
 
-		case PropertyTypeLastEditedBy:
+		case typed.PropertyTypeLastEditedBy:
 			var property LastEditedByProperty
 
 			if err := json.Unmarshal(value, &property); err != nil {
@@ -273,7 +275,7 @@ type Annotations struct {
 	// Whether the text is `code style`.
 	Code bool `json:"code"`
 	// Color of the text.
-	Color Color `json:"color"`
+	Color typed.Color `json:"color"`
 }
 
 type RichText interface {
@@ -288,7 +290,7 @@ func newRichText(data []byte) (RichText, error) {
 	}
 
 	switch base.Type {
-	case RichTextTypeText:
+	case typed.RichTextTypeText:
 		var richText RichTextText
 
 		if err := json.Unmarshal(data, &richText); err != nil {
@@ -297,7 +299,7 @@ func newRichText(data []byte) (RichText, error) {
 
 		return richText, nil
 
-	case RichTextTypeMention:
+	case typed.RichTextTypeMention:
 		var richText RichTextMention
 
 		if err := json.Unmarshal(data, &richText); err != nil {
@@ -306,7 +308,7 @@ func newRichText(data []byte) (RichText, error) {
 
 		return richText, nil
 
-	case RichTextTypeEquation:
+	case typed.RichTextTypeEquation:
 		var richText RichTextEquation
 
 		if err := json.Unmarshal(data, &richText); err != nil {
@@ -319,21 +321,13 @@ func newRichText(data []byte) (RichText, error) {
 	return nil, ErrUnknown
 }
 
-type RichTextType string
-
-const (
-	RichTextTypeText     RichTextType = "text"
-	RichTextTypeMention  RichTextType = "mention"
-	RichTextTypeEquation RichTextType = "equation"
-)
-
 type BaseRichText struct {
 	// The plain text without annotations.
 	PlainText string `json:"plain_text,omitempty"`
 	// (Optional) The URL of any link or internal Notion mention in this text, if any.
 	Href string `json:"href,omitempty"`
 	// Type of this rich text object.
-	Type RichTextType `json:"type"`
+	Type typed.RichTextType `json:"type"`
 	// All annotations that apply to this rich text.
 	// Annotations include colors and bold/italics/underline/strikethrough.
 	Annotations *Annotations `json:"annotations,omitempty"`
@@ -408,37 +402,13 @@ type Property interface {
 	isProperty()
 }
 
-type PropertyType string
-
-const (
-	PropertyTypeTitle          PropertyType = "title"
-	PropertyTypeRichText       PropertyType = "rich_text"
-	PropertyTypeNumber         PropertyType = "number"
-	PropertyTypeSelect         PropertyType = "select"
-	PropertyTypeMultiSelect    PropertyType = "multi_select"
-	PropertyTypeDate           PropertyType = "date"
-	PropertyTypePeople         PropertyType = "people"
-	PropertyTypeFile           PropertyType = "file"
-	PropertyTypeCheckbox       PropertyType = "checkbox"
-	PropertyTypeURL            PropertyType = "url"
-	PropertyTypeEmail          PropertyType = "email"
-	PropertyTypePhoneNumber    PropertyType = "phone_number"
-	PropertyTypeFormula        PropertyType = "formula"
-	PropertyTypeRelation       PropertyType = "relation"
-	PropertyTypeRollup         PropertyType = "rollup"
-	PropertyTypeCreatedTime    PropertyType = "created_time"
-	PropertyTypeCreatedBy      PropertyType = "created_by"
-	PropertyTypeLastEditedTime PropertyType = "last_edited_time"
-	PropertyTypeLastEditedBy   PropertyType = "last_edited_by"
-)
-
 type baseProperty struct {
 	// The ID of the property, usually a short string of random letters and symbols.
 	// Some automatically generated property types have special human-readable IDs.
 	// For example, all Title properties have an ID of "title".
 	ID string `json:"id"`
 	// Type that controls the behavior of the property
-	Type PropertyType `json:"type"`
+	Type typed.PropertyType `json:"type"`
 }
 
 func (p baseProperty) isProperty() {}
@@ -453,54 +423,43 @@ type RichTextProperty struct {
 	RichText interface{} `json:"rich_text"`
 }
 
-type NumberFormat string
-
-const (
-	NumberFormatNumber           NumberFormat = "number"
-	NumberFormatNumberWithCommas NumberFormat = "number_with_commas"
-	NumberFormatPercent          NumberFormat = "percent"
-	NumberFormatDollar           NumberFormat = "dollar"
-	NumberFormatEuro             NumberFormat = "euro"
-	NumberFormatPound            NumberFormat = "pound"
-	NumberFormatYen              NumberFormat = "yen"
-	NumberFormatRuble            NumberFormat = "ruble"
-	NumberFormatRupee            NumberFormat = "rupee"
-	NumberFormatWon              NumberFormat = "won"
-	NumberFormatYuan             NumberFormat = "yuan"
-)
+type NumberPropertyOption struct {
+	Format typed.NumberFormat `json:"format"`
+}
 
 type NumberProperty struct {
 	baseProperty
-	Number struct {
-		Format NumberFormat `json:"format"`
-	} `json:"number"`
+	Number NumberPropertyOption `json:"number"`
 }
 
 type SelectOption struct {
-	Name  string `json:"name"`
-	ID    string `json:"id"`
-	Color Color  `json:"color"`
+	Name  string      `json:"name"`
+	ID    string      `json:"id"`
+	Color typed.Color `json:"color"`
 }
 
 type MultiSelectOption struct {
-	Name  string `json:"name"`
-	ID    string `json:"id"`
-	Color Color  `json:"color"`
+	Name  string      `json:"name"`
+	ID    string      `json:"id"`
+	Color typed.Color `json:"color"`
+}
+
+type SelectPropertyOption struct {
+	Options []SelectOption `json:"options"`
 }
 
 type SelectProperty struct {
 	baseProperty
+	Select SelectPropertyOption `json:"select"`
+}
 
-	Select struct {
-		Options []SelectOption `json:"options"`
-	} `json:"select"`
+type MultiSelectPropertyOption struct {
+	Options []MultiSelectOption `json:"options"`
 }
 
 type MultiSelectProperty struct {
 	baseProperty
-	MultiSelect struct {
-		Options []MultiSelectOption `json:"options"`
-	} `json:"multi_select"`
+	MultiSelect MultiSelectPropertyOption `json:"multi_select"`
 }
 
 type DateProperty struct {
@@ -554,33 +513,17 @@ type RelationProperty struct {
 	} `json:"relation"`
 }
 
-type RollupFunction string
-
-const (
-	RollupFunctionCountAll          RollupFunction = "count_all"
-	RollupFunctionCountValues       RollupFunction = "count_values"
-	RollupFunctionCountUniqueValues RollupFunction = "count_unique_values"
-	RollupFunctionCountEmpty        RollupFunction = "count_empty"
-	RollupFunctionCountNotEmpty     RollupFunction = "count_not_empty"
-	RollupFunctionPercentEmpty      RollupFunction = "percent_empty"
-	RollupFunctionPercentNotEmpty   RollupFunction = "percent_not_empty"
-	RollupFunctionSum               RollupFunction = "sum"
-	RollupFunctionAverage           RollupFunction = "average"
-	RollupFunctionMedian            RollupFunction = "median"
-	RollupFunctionMin               RollupFunction = "min"
-	RollupFunctionMax               RollupFunction = "max"
-	RollupFunctionRange             RollupFunction = "range"
-)
+type RollupPropertyOption struct {
+	RelationPropertyName string               `json:"relation_property_name"`
+	RelationPropertyID   string               `json:"relation_property_id"`
+	RollupPropertyName   string               `json:"rollup_property_name"`
+	RollupPropertyID     string               `json:"rollup_property_id"`
+	Function             typed.RollupFunction `json:"function"`
+}
 
 type RollupProperty struct {
 	baseProperty
-	Rollup struct {
-		RelationPropertyName string         `json:"relation_property_name"`
-		RelationPropertyID   string         `json:"relation_property_id"`
-		RollupPropertyName   string         `json:"rollup_property_name"`
-		RollupPropertyID     string         `json:"rollup_property_id"`
-		Function             RollupFunction `json:"function"`
-	} `json:"rollup"`
+	Rollup RollupPropertyOption `json:"rollup"`
 }
 
 type CreatedTimeProperty struct {
@@ -620,24 +563,10 @@ type DatabasesListResponse struct {
 	Results []Database `json:"results"`
 }
 
-type SortTimestamp string
-
-const (
-	SortTimestampByCreatedTime    SortTimestamp = "created_time"
-	SortTimestampByLastEditedTime SortTimestamp = "last_edited_time"
-)
-
-type SortDirection string
-
-const (
-	SortDirectionAscending  SortDirection = "ascending"
-	SortDirectionDescending SortDirection = "descending"
-)
-
 type Sort struct {
-	Property  string        `json:"property,omitempty"`
-	Timestamp SortTimestamp `json:"timestamp,omitempty"`
-	Direction SortDirection `json:"direction,omitempty"`
+	Property  string              `json:"property,omitempty"`
+	Timestamp typed.SortTimestamp `json:"timestamp,omitempty"`
+	Direction typed.SortDirection `json:"direction,omitempty"`
 }
 
 type Filter interface {
