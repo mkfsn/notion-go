@@ -52,9 +52,9 @@ type SearchSort struct {
 
 type SearchParameters struct {
 	PaginationParameters
-	Query  string       `json:"query"`
-	Sort   SearchSort   `json:"sort"`
-	Filter SearchFilter `json:"filter"`
+	Query  string       `json:"query" url:"-"`
+	Sort   SearchSort   `json:"sort" url:"-"`
+	Filter SearchFilter `json:"filter" url:"-"`
 }
 
 type SearchableObject interface {
