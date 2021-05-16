@@ -335,9 +335,9 @@ type basePropertyValue struct {
 	// Underlying identifier for the property. This identifier is guaranteed to remain constant when the property name changes.
 	// It may be a UUID, but is often a short random string.
 	// The id may be used in place of name when creating or updating pages.
-	ID string `json:"id"`
+	ID string `json:"id,omitempty"`
 	// Type of the property
-	Type PropertyValueType `json:"type"`
+	Type PropertyValueType `json:"type,omitempty"`
 }
 
 func (p basePropertyValue) isPropertyValue() {}
@@ -411,22 +411,26 @@ type NumberPropertyValue struct {
 	Number float64 `json:"number"`
 }
 
+type SelectPropertyValueOption struct {
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name"`
+	Color Color  `json:"color,omitempty"`
+}
+
 type SelectPropertyValue struct {
 	basePropertyValue
-	Select struct {
-		ID    string `json:"id"`
-		Name  string `json:"name"`
-		Color Color  `json:"color"`
-	} `json:"select"`
+	Select SelectPropertyValueOption `json:"select"`
+}
+
+type MultiSelectPropertyValueOption struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Color Color  `json:"color"`
 }
 
 type MultiSelectPropertyValue struct {
 	basePropertyValue
-	MultiSelect []struct {
-		ID    string `json:"id"`
-		Name  string `json:"name"`
-		Color Color  `json:"color"`
-	} `json:"multi_select"`
+	MultiSelect []MultiSelectPropertyValueOption `json:"multi_select"`
 }
 
 type DatePropertyValue struct {
@@ -654,11 +658,11 @@ type PagesUpdateResponse struct {
 
 type PagesCreateParameters struct {
 	// A DatabaseParentInput or PageParentInput
-	Parent ParentInput `json:"parent"`
+	Parent ParentInput `json:"parent" url:"-"`
 	// Property values of this page. The keys are the names or IDs of the property and the values are property values.
-	Properties map[string]PropertyValue `json:"properties"`
+	Properties map[string]PropertyValue `json:"properties" url:"-"`
 	// Page content for the new page as an array of block objects
-	Children []Block `json:"children"`
+	Children []Block `json:"children,omitempty" url:"-"`
 }
 
 type PagesCreateResponse struct {
@@ -703,5 +707,16 @@ func (p *pagesClient) Update(ctx context.Context, params PagesUpdateParameters) 
 }
 
 func (p *pagesClient) Create(ctx context.Context, params PagesCreateParameters) (*PagesCreateResponse, error) {
-	return nil, ErrUnimplemented
+	b, err := p.client.Request(ctx, http.MethodPost, APIPagesCreateEndpoint, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var response PagesCreateResponse
+
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }

@@ -24,7 +24,7 @@ go get -u github.com/mkfsn/notion-go
   * [x] Query ✅
 - [ ] Pages ⚠️
   * [x] Retrieve ✅
-  * [ ] Create ❌
+  * [x] Create ✅️
   * [ ] Update ❌
 - [x] Blocks ✅️
   * [x] Children ✅
