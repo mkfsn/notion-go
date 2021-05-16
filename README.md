@@ -13,21 +13,23 @@ which is written in JavaScript.
 go get -u github.com/mkfsn/notion-go
 ```
 
-## TODOs
+## Supported Features
+
+This client supports all endpoints in the [Notion API](https://developers.notion.com/reference/intro).
 
 - [x] Users ✅
-   * [x] Retrieve ✅
-   * [x] List ✅
+   * [x] [Retrieve](https://developers.notion.com/reference/get-user) ✅
+   * [x] [List](https://developers.notion.com/reference/get-users) ✅
 - [x] Databases ✅
-  * [x] Retrieve ✅
-  * [x] List ✅
-  * [x] Query ✅
+  * [x] [Retrieve](https://developers.notion.com/reference/get-database) ✅
+  * [x] [List](https://developers.notion.com/reference/get-databases) ✅
+  * [x] [Query](https://developers.notion.com/reference/post-database-query) ✅
 - [x] Pages ✅
-  * [x] Retrieve ✅
-  * [x] Create ✅️
-  * [x] Update ✅️
+  * [x] [Retrieve](https://developers.notion.com/reference/get-page) ✅
+  * [x] [Create](https://developers.notion.com/reference/post-page) ✅️
+  * [x] [Update](https://developers.notion.com/reference/patch-page) ✅️
 - [x] Blocks ✅️
   * [x] Children ✅
-    - [x] Retrieve ✅
-    - [x] Append ✅
-- [x] Search ✅
+    - [x] [Retrieve](https://developers.notion.com/reference/get-block-children) ✅
+    - [x] [Append](https://developers.notion.com/reference/patch-block-children) ✅
+- [x] [Search](https://developers.notion.com/reference/post-search) ✅
