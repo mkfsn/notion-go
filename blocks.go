@@ -2,11 +2,117 @@ package notion
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
 	"time"
 )
 
 type Block interface {
 	isBlock()
+}
+
+func newBlock(data []byte) (Block, error) {
+	var base BlockBase
+
+	if err := json.Unmarshal(data, &base); err != nil {
+		return nil, err
+	}
+
+	switch base.Type {
+	case BlockTypeParagraph:
+		var block ParagraphBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeHeading1:
+		var block Heading3Block
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeHeading2:
+		var block Heading3Block
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeHeading3:
+		var block Heading3Block
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeBulletedListItem:
+		var block BulletedListItemBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeNumberedListItem:
+		var block NumberedListItemBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeToDo:
+		var block ToDoBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeToggle:
+		var block ToggleBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeChildPage:
+		var block ChildPageBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+
+	case BlockTypeUnsupported:
+		var block UnsupportedBlock
+
+		if err := json.Unmarshal(data, &block); err != nil {
+			return nil, err
+		}
+
+		return block, nil
+	}
+
+	return nil, ErrUnknown
 }
 
 type BlockType string
@@ -47,7 +153,7 @@ type ParagraphBlock struct {
 	Children []BlockBase `json:"children"`
 }
 
-type HeadingOneBlock struct {
+type Heading3Block struct {
 	BlockBase
 	Text []RichText `json:"text"`
 }
@@ -121,12 +227,39 @@ type BlocksChildrenListParameters struct {
 	PaginationParameters
 
 	// Identifier for a block
-	BlockID string
+	BlockID string `json:"-"`
 }
 
 type BlocksChildrenListResponse struct {
 	PaginatedList
-	Results []BlockBase `json:"results"`
+	Results []Block `json:"results"`
+}
+
+func (b *BlocksChildrenListResponse) UnmarshalJSON(data []byte) error {
+	type Alias BlocksChildrenListResponse
+
+	alias := struct {
+		*Alias
+		Results []json.RawMessage `json:"results"`
+	}{
+		Alias: (*Alias)(b),
+	}
+
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+
+	b.Results = make([]Block, 0, len(alias.Results))
+
+	for _, value := range alias.Results {
+		block, err := newBlock(value)
+		if err != nil {
+			return err
+		}
+		b.Results = append(b.Results, block)
+	}
+
+	return nil
 }
 
 type BlocksChildrenAppendParameters struct {
@@ -157,7 +290,22 @@ func newBlocksChildrenClient(client client) *blocksChildrenClient {
 }
 
 func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenListParameters) (*BlocksChildrenListResponse, error) {
-	return nil, ErrUnimplemented
+	endpoint := strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)
+
+	fmt.Printf("endpoint: %s\n", endpoint)
+
+	data, err := b.client.Request(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response BlocksChildrenListResponse
+
+	if err := json.Unmarshal(data, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (b *blocksChildrenClient) Append(ctx context.Context, params BlocksChildrenAppendParameters) (*BlocksChildrenAppendResponse, error) {

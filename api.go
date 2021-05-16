@@ -5,18 +5,18 @@ import (
 )
 
 const (
-	APIBaseURL                        = "https://api.notion.com"
-	APIUsersListEndpoint              = "/v1/users"
-	APIUsersRetrieveEndpoint          = "/v1/users/{user_id}"
-	APIBlocksRetrieveChildrenEndpoint = "/v1/blocks/{block_id}/children"
-	APIBlocksAppendChildrenEndpoint   = "/v1/blocks/{block_id}/children"
-	APIPagesCreateEndpoint            = "/v1/pages"
-	APIPagesRetrieveEndpoint          = "/v1/pages/{page_id}"
-	APIPagesUpdateEndpoint            = "/v1/pages/{page_id}"
-	APIDatabasesListEndpoint          = "/v1/databases"
-	APIDatabasesRetrieveEndpoint      = "/v1/databases/{database_id}"
-	APIDatabasesQueryEndpoint         = "/v1/databases/{database_id}/query"
-	APISearchEndpoint                 = "/v1/search"
+	APIBaseURL                      = "https://api.notion.com"
+	APIUsersListEndpoint            = "/v1/users"
+	APIUsersRetrieveEndpoint        = "/v1/users/{user_id}"
+	APIBlocksListChildrenEndpoint   = "/v1/blocks/{block_id}/children"
+	APIBlocksAppendChildrenEndpoint = "/v1/blocks/{block_id}/children"
+	APIPagesCreateEndpoint          = "/v1/pages"
+	APIPagesRetrieveEndpoint        = "/v1/pages/{page_id}"
+	APIPagesUpdateEndpoint          = "/v1/pages/{page_id}"
+	APIDatabasesListEndpoint        = "/v1/databases"
+	APIDatabasesRetrieveEndpoint    = "/v1/databases/{database_id}"
+	APIDatabasesQueryEndpoint       = "/v1/databases/{database_id}/query"
+	APISearchEndpoint               = "/v1/search"
 )
 
 const (
