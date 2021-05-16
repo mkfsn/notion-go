@@ -33,6 +33,7 @@ type API struct {
 
 func New(setters ...ClientOption) *API {
 	options := defaultOptions
+
 	for _, setter := range setters {
 		setter(&options)
 	}
@@ -52,6 +53,7 @@ func (c *API) Users() UsersInterface {
 	if c == nil {
 		return nil
 	}
+
 	return c.usersClient
 }
 
@@ -59,6 +61,7 @@ func (c *API) Databases() DatabasesInterface {
 	if c == nil {
 		return nil
 	}
+
 	return c.databasesClient
 }
 
@@ -66,6 +69,7 @@ func (c *API) Pages() PagesInterface {
 	if c == nil {
 		return nil
 	}
+
 	return c.pagesClient
 }
 
@@ -73,6 +77,7 @@ func (c *API) Blocks() BlocksInterface {
 	if c == nil {
 		return nil
 	}
+
 	return c.blocksClient
 }
 
@@ -80,5 +85,6 @@ func (c *API) Search(ctx context.Context, params SearchParameters) (*SearchRespo
 	if c == nil {
 		return nil, ErrUnknown
 	}
+
 	return c.searchClient.Search(ctx, params)
 }

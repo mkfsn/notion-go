@@ -75,6 +75,8 @@ type Page struct {
 	Archived bool `json:"archived"`
 }
 
+// FIXME: reduce the complexity
+// nolint:gocyclo,gocognit,funlen
 func (p *Page) UnmarshalJSON(data []byte) error {
 	type Alias Page
 
@@ -368,6 +370,7 @@ func (t *TitlePropertyValue) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+
 		t.Title = append(t.Title, richText)
 	}
 
@@ -400,6 +403,7 @@ func (r *RichTextPropertyValue) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+
 		r.RichText = append(r.RichText, richText)
 	}
 
