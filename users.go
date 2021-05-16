@@ -41,7 +41,7 @@ type BotUser struct {
 }
 
 type UsersRetrieveParameters struct {
-	UserID string `json:"user_id"`
+	UserID string `json:"-"`
 }
 
 type UsersRetrieveResponse struct {
@@ -152,7 +152,7 @@ func newUsersClient(client client) *usersClient {
 func (u *usersClient) Retrieve(ctx context.Context, params UsersRetrieveParameters) (*UsersRetrieveResponse, error) {
 	endpoint := strings.Replace(APIUsersRetrieveEndpoint, "{user_id}", params.UserID, 1)
 
-	b, err := u.client.Request(ctx, http.MethodGet, endpoint, params)
+	b, err := u.client.Request(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
