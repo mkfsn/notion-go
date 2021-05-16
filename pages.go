@@ -648,8 +648,8 @@ type PagesRetrieveResponse struct {
 }
 
 type PagesUpdateParameters struct {
-	PageID     string
-	Properties map[string]PropertyValue `json:"properties"`
+	PageID     string                   `json:"-" url:"-"`
+	Properties map[string]PropertyValue `json:"properties" url:"-"`
 }
 
 type PagesUpdateResponse struct {
@@ -703,7 +703,20 @@ func (p *pagesClient) Retrieve(ctx context.Context, params PagesRetrieveParamete
 }
 
 func (p *pagesClient) Update(ctx context.Context, params PagesUpdateParameters) (*PagesUpdateResponse, error) {
-	return nil, ErrUnimplemented
+	endpoint := strings.Replace(APIPagesUpdateEndpoint, "{page_id}", params.PageID, 1)
+
+	b, err := p.client.Request(ctx, http.MethodPatch, endpoint, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var response PagesUpdateResponse
+
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (p *pagesClient) Create(ctx context.Context, params PagesCreateParameters) (*PagesCreateResponse, error) {

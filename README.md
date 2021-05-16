@@ -22,10 +22,10 @@ go get -u github.com/mkfsn/notion-go
   * [x] Retrieve ✅
   * [x] List ✅
   * [x] Query ✅
-- [ ] Pages ⚠️
+- [x] Pages ✅
   * [x] Retrieve ✅
   * [x] Create ✅️
-  * [ ] Update ❌
+  * [x] Update ✅️
 - [x] Blocks ✅️
   * [x] Children ✅
     - [x] Retrieve ✅
