@@ -16,7 +16,40 @@ go get -u github.com/mkfsn/notion-go
 ## Usage
 
 ```go
+c := notion.New("<NOTION_AUTH_TOKEN>")
 
+// Retrieve block children
+c.Blocks().List(...)
+
+// Append block children
+c.Blocks().Append(...)
+
+// List databases
+c.Databases().List(...)
+
+// Query a database
+c.Databases().Query(...)
+
+// Retrieve a database
+c.Databases().Retrieve(...)
+
+// Create a page
+c.Pages().Create(...)
+
+// Retrieve a page
+c.Pages().Retreive(...)
+
+// Update page properties
+c.Pages().Update(...)
+
+// List all users
+c.Users().List(...)
+
+// Retrieve a users
+c.Users().Retrieve(...)
+
+// Search
+c.Search(...)
 ```
 
 ## Supported Features
