@@ -14,7 +14,6 @@ linters:
   - godox            # Tool for detection of FIXME, TODO and other comment keywords [fast: true, auto-fix: false]
   - gochecknoglobals # Checks that no globals are present in Go code [fast: true, auto-fix: false]
   - gofumpt
-  - exhaustivestruct
   - maligned
   - interfacer
 
