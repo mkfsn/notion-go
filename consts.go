@@ -89,6 +89,7 @@ const (
 	ObjectTypePage     ObjectType = "page"
 	ObjectTypeDatabase ObjectType = "database"
 	ObjectTypeList     ObjectType = "list"
+	ObjectTypeUser     ObjectType = "user"
 )
 
 type ParentType string

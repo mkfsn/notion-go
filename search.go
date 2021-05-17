@@ -114,7 +114,7 @@ func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
 	case ObjectTypeDatabase:
 		s.SearchableObject = &Database{}
 
-	case ObjectTypeBlock, ObjectTypeList:
+	case ObjectTypeBlock, ObjectTypeList, ObjectTypeUser:
 		return ErrUnknown
 	}
 

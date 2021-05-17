@@ -14,11 +14,11 @@ type User interface {
 }
 
 type baseUser struct {
-	Object    string   `json:"object"`
-	ID        string   `json:"id"`
-	Type      UserType `json:"type"`
-	Name      string   `json:"name"`
-	AvatarURL string   `json:"avatar_url"`
+	Object    ObjectType `json:"object"`
+	ID        string     `json:"id"`
+	Type      UserType   `json:"type"`
+	Name      string     `json:"name"`
+	AvatarURL string     `json:"avatar_url"`
 }
 
 func (b baseUser) isUser() {}
@@ -113,8 +113,6 @@ func (u *usersClient) Retrieve(ctx context.Context, params UsersRetrieveParamete
 
 	err := u.restClient.New().Get().
 		Endpoint(strings.Replace(APIUsersRetrieveEndpoint, "{user_id}", params.UserID, 1)).
-		QueryStruct(params).
-		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
 	return &result, err // nolint:wrapcheck
@@ -128,7 +126,6 @@ func (u *usersClient) List(ctx context.Context, params UsersListParameters) (*Us
 	err := u.restClient.New().Get().
 		Endpoint(APIUsersListEndpoint).
 		QueryStruct(params).
-		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
 	return &result, err // nolint:wrapcheck
