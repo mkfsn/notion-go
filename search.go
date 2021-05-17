@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/mkfsn/notion-go/rest"
 )
@@ -52,7 +53,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal SearchResponse: %w", err)
 	}
 
 	s.Results = make([]SearchableObject, 0, len(alias.Results))
@@ -80,6 +81,7 @@ func newSearchClient(restClient rest.Interface) *searchClient {
 
 func (s *searchClient) Search(ctx context.Context, params SearchParameters) (*SearchResponse, error) {
 	var result SearchResponse
+
 	var failure HTTPError
 
 	err := s.restClient.New().
@@ -89,7 +91,7 @@ func (s *searchClient) Search(ctx context.Context, params SearchParameters) (*Se
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 type searchableObjectDecoder struct {
@@ -102,7 +104,7 @@ func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal SearchableObject: %w", err)
 	}
 
 	switch decoder.Object {
@@ -112,7 +114,7 @@ func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
 	case ObjectTypeDatabase:
 		s.SearchableObject = &Database{}
 
-	case ObjectTypeBlock:
+	case ObjectTypeBlock, ObjectTypeList:
 		return ErrUnknown
 	}
 

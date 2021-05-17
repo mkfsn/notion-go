@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -33,7 +34,7 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal Database: %w", err)
 	}
 
 	d.Title = make([]RichText, 0, len(alias.Title))
@@ -521,6 +522,7 @@ func newDatabasesClient(restClient rest.Interface) *databasesClient {
 
 func (d *databasesClient) Retrieve(ctx context.Context, params DatabasesRetrieveParameters) (*DatabasesRetrieveResponse, error) {
 	var result DatabasesRetrieveResponse
+
 	var failure HTTPError
 
 	err := d.restClient.New().Get().
@@ -529,11 +531,12 @@ func (d *databasesClient) Retrieve(ctx context.Context, params DatabasesRetrieve
 		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 func (d *databasesClient) List(ctx context.Context, params DatabasesListParameters) (*DatabasesListResponse, error) {
 	var result DatabasesListResponse
+
 	var failure HTTPError
 
 	err := d.restClient.New().Get().
@@ -542,11 +545,12 @@ func (d *databasesClient) List(ctx context.Context, params DatabasesListParamete
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 func (d *databasesClient) Query(ctx context.Context, params DatabasesQueryParameters) (*DatabasesQueryResponse, error) {
 	var result DatabasesQueryResponse
+
 	var failure HTTPError
 
 	err := d.restClient.New().Post().
@@ -555,7 +559,7 @@ func (d *databasesClient) Query(ctx context.Context, params DatabasesQueryParame
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 type richTextDecoder struct {
@@ -568,7 +572,7 @@ func (r *richTextDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal RichText: %w", err)
 	}
 
 	switch decoder.Type {
@@ -589,13 +593,15 @@ type propertyDecoder struct {
 	Property
 }
 
-func (p *propertyDecoder) Unmarshal(data []byte) error {
+// UnmarshalJSON implements json.Unmarshaler
+// nolint: cyclop
+func (p *propertyDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
 		Type PropertyType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal Property: %w", err)
 	}
 
 	switch decoder.Type {

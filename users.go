@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/mkfsn/notion-go/rest"
@@ -50,7 +51,7 @@ func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) (err error) {
 	var decoder userDecoder
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal UsersRetrieveResponse: %w", err)
 	}
 
 	u.User = decoder.User
@@ -78,7 +79,7 @@ func (u *UsersListResponse) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal UsersListResponse: %w", err)
 	}
 
 	u.Results = make([]User, 0, len(alias.Results))
@@ -107,6 +108,7 @@ func newUsersClient(restClient rest.Interface) *usersClient {
 
 func (u *usersClient) Retrieve(ctx context.Context, params UsersRetrieveParameters) (*UsersRetrieveResponse, error) {
 	var result UsersRetrieveResponse
+
 	var failure HTTPError
 
 	err := u.restClient.New().Get().
@@ -115,11 +117,12 @@ func (u *usersClient) Retrieve(ctx context.Context, params UsersRetrieveParamete
 		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 func (u *usersClient) List(ctx context.Context, params UsersListParameters) (*UsersListResponse, error) {
 	var result UsersListResponse
+
 	var failure HTTPError
 
 	err := u.restClient.New().Get().
@@ -128,7 +131,7 @@ func (u *usersClient) List(ctx context.Context, params UsersListParameters) (*Us
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 type userDecoder struct {
@@ -141,7 +144,7 @@ func (u *userDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal User: %w", err)
 	}
 
 	switch decoder.Type {

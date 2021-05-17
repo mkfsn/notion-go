@@ -35,56 +35,67 @@ func (r *restClient) New() Interface {
 		header:     r.header.Clone(),
 		httpClient: r.httpClient, // TODO: deep copy
 	}
+
 	return newRestClient
 }
 
 func (r *restClient) BearerToken(token string) Interface {
 	r.header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
 	return r
 }
 
 func (r *restClient) BaseURL(baseURL string) Interface {
 	r.baseURL = baseURL
+
 	return r
 }
 
 func (r *restClient) Client(httpClient *http.Client) Interface {
 	r.httpClient = httpClient
+
 	return r
 }
 
 func (r *restClient) UserAgent(userAgent string) Interface {
 	r.header.Set("User-Agent", userAgent)
+
 	return r
 }
 
 func (r *restClient) Header(key, value string) Interface {
 	r.header.Set(key, value)
+
 	return r
 }
 
 func (r *restClient) Get() Interface {
 	r.method = http.MethodGet
+
 	return r
 }
 
 func (r *restClient) Post() Interface {
 	r.method = http.MethodPost
+
 	return r
 }
 
 func (r *restClient) Patch() Interface {
 	r.method = http.MethodPatch
+
 	return r
 }
 
 func (r *restClient) Endpoint(endpoint string) Interface {
 	r.endpoint = endpoint
+
 	return r
 }
 
 func (r *restClient) QueryStruct(queryStruct interface{}) Interface {
 	r.queryStruct = queryStruct
+
 	return r
 }
 
@@ -101,17 +112,17 @@ func (r *restClient) BodyJSON(bodyJSON interface{}) Interface {
 func (r *restClient) Request(ctx context.Context) (*http.Request, error) {
 	v, err := query.Values(r.queryStruct)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build query parameters: %w", err)
 	}
 
 	b, err := json.Marshal(r.bodyJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal body to JSON: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, r.method, r.baseURL+r.endpoint, bytes.NewBuffer(b))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create an HTTP request: %w", err)
 	}
 
 	req.URL.RawQuery = v.Encode()
@@ -129,13 +140,13 @@ func (r *restClient) Receive(ctx context.Context, success, failure interface{}) 
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to process an HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read data from response body: %w", err)
 	}
 
 	return r.decodeResponseData(resp.StatusCode, b, success, failure)
@@ -155,7 +166,7 @@ func (r *restClient) decodeResponseData(statusCode int, data []byte, success, fa
 	}
 
 	if err := json.Unmarshal(data, failure); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal error message from HTTP response body: %w", err)
 	}
 
 	return failure.(error)

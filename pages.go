@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -80,7 +81,7 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal Page: %w", err)
 	}
 
 	p.Parent = alias.Parent.Parent
@@ -127,7 +128,7 @@ func (t *TitlePropertyValue) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal TitlePropertyValue: %w", err)
 	}
 
 	t.Title = make([]RichText, 0, len(alias.Title))
@@ -155,7 +156,7 @@ func (r *RichTextPropertyValue) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal RichTextPropertyValue: %w", err)
 	}
 
 	r.RichText = make([]RichText, 0, len(alias.RichText))
@@ -248,7 +249,7 @@ func (f *FormulaPropertyValue) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal FormulaPropertyValue: %w", err)
 	}
 
 	f.Formula = alias.Formula.FormulaValue
@@ -386,6 +387,7 @@ func newPagesClient(restClient rest.Interface) *pagesClient {
 
 func (p *pagesClient) Retrieve(ctx context.Context, params PagesRetrieveParameters) (*PagesRetrieveResponse, error) {
 	var result PagesRetrieveResponse
+
 	var failure HTTPError
 
 	err := p.restClient.New().Get().
@@ -394,11 +396,12 @@ func (p *pagesClient) Retrieve(ctx context.Context, params PagesRetrieveParamete
 		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 func (p *pagesClient) Update(ctx context.Context, params PagesUpdateParameters) (*PagesUpdateResponse, error) {
 	var result PagesUpdateResponse
+
 	var failure HTTPError
 
 	err := p.restClient.New().Patch().
@@ -407,11 +410,12 @@ func (p *pagesClient) Update(ctx context.Context, params PagesUpdateParameters) 
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 func (p *pagesClient) Create(ctx context.Context, params PagesCreateParameters) (*PagesCreateResponse, error) {
 	var result PagesCreateResponse
+
 	var failure HTTPError
 
 	err := p.restClient.New().Post().
@@ -420,7 +424,7 @@ func (p *pagesClient) Create(ctx context.Context, params PagesCreateParameters) 
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 type formulaValueDecoder struct {
@@ -433,7 +437,7 @@ func (f *formulaValueDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal FormulaValue: %w", err)
 	}
 
 	switch decoder.Type {
@@ -463,7 +467,7 @@ func (p *parentDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal Parent: %w", err)
 	}
 
 	switch decoder.Type {
@@ -484,13 +488,15 @@ type propertyValueDecoder struct {
 	PropertyValue
 }
 
+// UnmarshalJSON implements json.Unmarshaler
+// nolint: cyclop
 func (p *propertyValueDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
 		Type PropertyValueType `json:"type,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal PropertyValue: %w", err)
 	}
 
 	switch decoder.Type {
@@ -547,7 +553,6 @@ func (p *propertyValueDecoder) UnmarshalJSON(data []byte) error {
 
 	case PropertyValueTypeLastEditedBy:
 		p.PropertyValue = &LastEditedByPropertyValue{}
-
 	}
 
 	return json.Unmarshal(data, p.PropertyValue)

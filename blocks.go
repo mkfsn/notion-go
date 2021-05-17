@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -43,7 +44,7 @@ func (h *HeadingBlock) UnmarshalJSON(data []byte) error {
 	var text []richTextDecoder
 
 	if err := json.Unmarshal(data, &text); err != nil {
-		return nil
+		return fmt.Errorf("failed to unmarshal HeadingBlock: %w", err)
 	}
 
 	h.Text = make([]RichText, 0, len(text))
@@ -82,7 +83,7 @@ func (r *RichTextBlock) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return nil
+		return fmt.Errorf("failed to unmarshal RichTextBlock: %w", err)
 	}
 
 	r.Text = make([]RichText, 0, len(r.Text))
@@ -184,7 +185,7 @@ func (b *BlocksChildrenListResponse) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal BlocksChildrenListResponse: %w", err)
 	}
 
 	b.Results = make([]Block, 0, len(alias.Results))
@@ -211,7 +212,7 @@ func (b *BlocksChildrenAppendResponse) UnmarshalJSON(data []byte) error {
 	var decoder blockDecoder
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal BlocksChildrenAppendResponse: %w", err)
 	}
 
 	b.Block = decoder.Block
@@ -236,6 +237,7 @@ func newBlocksChildrenClient(restClient rest.Interface) *blocksChildrenClient {
 
 func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenListParameters) (*BlocksChildrenListResponse, error) {
 	var result BlocksChildrenListResponse
+
 	var failure HTTPError
 
 	err := b.restClient.New().Get().
@@ -244,11 +246,12 @@ func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenLi
 		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 func (b *blocksChildrenClient) Append(ctx context.Context, params BlocksChildrenAppendParameters) (*BlocksChildrenAppendResponse, error) {
 	var result BlocksChildrenAppendResponse
+
 	var failure HTTPError
 
 	err := b.restClient.New().Patch().
@@ -257,20 +260,22 @@ func (b *blocksChildrenClient) Append(ctx context.Context, params BlocksChildren
 		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
-	return &result, err
+	return &result, err // nolint:wrapcheck
 }
 
 type blockDecoder struct {
 	Block
 }
 
+// UnmarshalJSON implements json.Unmarshaler
+// nolint: cyclop
 func (b *blockDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
 		Type BlockType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal Block: %w", err)
 	}
 
 	switch decoder.Type {
