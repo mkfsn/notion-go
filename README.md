@@ -52,6 +52,8 @@ c.Users().Retrieve(...)
 c.Search(...)
 ```
 
+For more information, please see [examples](./examples).
+
 ## Supported Features
 
 This client supports all endpoints in the [Notion API](https://developers.notion.com/reference/intro).
