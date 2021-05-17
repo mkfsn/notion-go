@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/mkfsn/notion-go/rest"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 type Database struct {
-	Object typed.ObjectType `json:"object"`
-	ID     string           `json:"id"`
+	Object ObjectType `json:"object"`
+	ID     string     `json:"id"`
 
 	CreatedTime    time.Time           `json:"created_time"`
 	LastEditedTime time.Time           `json:"last_edited_time"`
@@ -64,7 +63,7 @@ type Annotations struct {
 	// Whether the text is `code style`.
 	Code bool `json:"code"`
 	// Color of the text.
-	Color typed.Color `json:"color"`
+	Color Color `json:"color"`
 }
 
 type RichText interface {
@@ -77,7 +76,7 @@ type BaseRichText struct {
 	// (Optional) The URL of any link or internal Notion mention in this text, if any.
 	Href string `json:"href,omitempty"`
 	// Type of this rich text object.
-	Type typed.RichTextType `json:"type"`
+	Type RichTextType `json:"type"`
 	// All annotations that apply to this rich text.
 	// Annotations include colors and bold/italics/underline/strikethrough.
 	Annotations *Annotations `json:"annotations,omitempty"`
@@ -158,7 +157,7 @@ type baseProperty struct {
 	// For example, all Title properties have an ID of "title".
 	ID string `json:"id"`
 	// Type that controls the behavior of the property
-	Type typed.PropertyType `json:"type"`
+	Type PropertyType `json:"type"`
 }
 
 func (p baseProperty) isProperty() {}
@@ -174,7 +173,7 @@ type RichTextProperty struct {
 }
 
 type NumberPropertyOption struct {
-	Format typed.NumberFormat `json:"format"`
+	Format NumberFormat `json:"format"`
 }
 
 type NumberProperty struct {
@@ -183,15 +182,15 @@ type NumberProperty struct {
 }
 
 type SelectOption struct {
-	Name  string      `json:"name"`
-	ID    string      `json:"id"`
-	Color typed.Color `json:"color"`
+	Name  string `json:"name"`
+	ID    string `json:"id"`
+	Color Color  `json:"color"`
 }
 
 type MultiSelectOption struct {
-	Name  string      `json:"name"`
-	ID    string      `json:"id"`
-	Color typed.Color `json:"color"`
+	Name  string `json:"name"`
+	ID    string `json:"id"`
+	Color Color  `json:"color"`
 }
 
 type SelectPropertyOption struct {
@@ -264,11 +263,11 @@ type RelationProperty struct {
 }
 
 type RollupPropertyOption struct {
-	RelationPropertyName string               `json:"relation_property_name"`
-	RelationPropertyID   string               `json:"relation_property_id"`
-	RollupPropertyName   string               `json:"rollup_property_name"`
-	RollupPropertyID     string               `json:"rollup_property_id"`
-	Function             typed.RollupFunction `json:"function"`
+	RelationPropertyName string         `json:"relation_property_name"`
+	RelationPropertyID   string         `json:"relation_property_id"`
+	RollupPropertyName   string         `json:"rollup_property_name"`
+	RollupPropertyID     string         `json:"rollup_property_id"`
+	Function             RollupFunction `json:"function"`
 }
 
 type RollupProperty struct {
@@ -314,9 +313,9 @@ type DatabasesListResponse struct {
 }
 
 type Sort struct {
-	Property  string              `json:"property,omitempty"`
-	Timestamp typed.SortTimestamp `json:"timestamp,omitempty"`
-	Direction typed.SortDirection `json:"direction,omitempty"`
+	Property  string        `json:"property,omitempty"`
+	Timestamp SortTimestamp `json:"timestamp,omitempty"`
+	Direction SortDirection `json:"direction,omitempty"`
 }
 
 type Filter interface {
@@ -492,10 +491,10 @@ type DatabasesQueryParameters struct {
 	// Identifier for a Notion database.
 	DatabaseID string `json:"-"`
 	// When supplied, limits which pages are returned based on the
-	// [filter conditions](https://developers.notion.com/reference-link/post-database-query-filter).
+	// [filter conditions](https://developers.com/reference-link/post-database-query-filter).
 	Filter Filter `json:"filter,omitempty"`
 	// When supplied, orders the results based on the provided
-	// [sort criteria](https://developers.notion.com/reference-link/post-database-query-sort).
+	// [sort criteria](https://developers.com/reference-link/post-database-query-sort).
 	Sorts []Sort `json:"sorts,omitempty"`
 }
 
@@ -565,7 +564,7 @@ type richTextDecoder struct {
 
 func (r *richTextDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Type typed.RichTextType `json:"type"`
+		Type RichTextType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -573,13 +572,13 @@ func (r *richTextDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.RichTextTypeText:
+	case RichTextTypeText:
 		r.RichText = &RichTextText{}
 
-	case typed.RichTextTypeMention:
+	case RichTextTypeMention:
 		r.RichText = &RichTextMention{}
 
-	case typed.RichTextTypeEquation:
+	case RichTextTypeEquation:
 		r.RichText = &RichTextEquation{}
 	}
 
@@ -592,7 +591,7 @@ type propertyDecoder struct {
 
 func (p *propertyDecoder) Unmarshal(data []byte) error {
 	var decoder struct {
-		Type typed.PropertyType `json:"type"`
+		Type PropertyType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -600,61 +599,61 @@ func (p *propertyDecoder) Unmarshal(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.PropertyTypeTitle:
+	case PropertyTypeTitle:
 		p.Property = &TitleProperty{}
 
-	case typed.PropertyTypeRichText:
+	case PropertyTypeRichText:
 		p.Property = &RichTextProperty{}
 
-	case typed.PropertyTypeNumber:
+	case PropertyTypeNumber:
 		p.Property = &NumberProperty{}
 
-	case typed.PropertyTypeSelect:
+	case PropertyTypeSelect:
 		p.Property = &SelectProperty{}
 
-	case typed.PropertyTypeMultiSelect:
+	case PropertyTypeMultiSelect:
 		p.Property = &MultiSelectProperty{}
 
-	case typed.PropertyTypeDate:
+	case PropertyTypeDate:
 		p.Property = &DateProperty{}
 
-	case typed.PropertyTypePeople:
+	case PropertyTypePeople:
 		p.Property = &PeopleProperty{}
 
-	case typed.PropertyTypeFile:
+	case PropertyTypeFile:
 		p.Property = &FileProperty{}
 
-	case typed.PropertyTypeCheckbox:
+	case PropertyTypeCheckbox:
 		p.Property = &CheckboxProperty{}
 
-	case typed.PropertyTypeURL:
+	case PropertyTypeURL:
 		p.Property = &URLProperty{}
 
-	case typed.PropertyTypeEmail:
+	case PropertyTypeEmail:
 		p.Property = &EmailProperty{}
 
-	case typed.PropertyTypePhoneNumber:
+	case PropertyTypePhoneNumber:
 		p.Property = &PhoneNumberProperty{}
 
-	case typed.PropertyTypeFormula:
+	case PropertyTypeFormula:
 		p.Property = &FormulaProperty{}
 
-	case typed.PropertyTypeRelation:
+	case PropertyTypeRelation:
 		p.Property = &RelationProperty{}
 
-	case typed.PropertyTypeRollup:
+	case PropertyTypeRollup:
 		p.Property = &RollupProperty{}
 
-	case typed.PropertyTypeCreatedTime:
+	case PropertyTypeCreatedTime:
 		p.Property = &CreatedTimeProperty{}
 
-	case typed.PropertyTypeCreatedBy:
+	case PropertyTypeCreatedBy:
 		p.Property = &CreatedByProperty{}
 
-	case typed.PropertyTypeLastEditedTime:
+	case PropertyTypeLastEditedTime:
 		p.Property = &LastEditedTimeProperty{}
 
-	case typed.PropertyTypeLastEditedBy:
+	case PropertyTypeLastEditedBy:
 		p.Property = &LastEditedByProperty{}
 	}
 

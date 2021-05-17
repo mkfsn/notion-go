@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/mkfsn/notion-go"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 func main() {
@@ -15,12 +14,12 @@ func main() {
 	resp, err := c.Search(context.Background(), notion.SearchParameters{
 		Query: "フィリスのアトリエ",
 		Sort: notion.SearchSort{
-			Direction: typed.SearchSortDirectionAscending,
-			Timestamp: typed.SearchSortTimestampLastEditedTime,
+			Direction: notion.SearchSortDirectionAscending,
+			Timestamp: notion.SearchSortTimestampLastEditedTime,
 		},
 		Filter: notion.SearchFilter{
-			Property: typed.SearchFilterPropertyObject,
-			Value:    typed.SearchFilterValuePage,
+			Property: notion.SearchFilterPropertyObject,
+			Value:    notion.SearchFilterValuePage,
 		},
 	})
 	if err != nil {

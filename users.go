@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/mkfsn/notion-go/rest"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 type User interface {
@@ -14,11 +13,11 @@ type User interface {
 }
 
 type baseUser struct {
-	Object    string         `json:"object"`
-	ID        string         `json:"id"`
-	Type      typed.UserType `json:"type"`
-	Name      string         `json:"name"`
-	AvatarURL string         `json:"avatar_url"`
+	Object    string   `json:"object"`
+	ID        string   `json:"id"`
+	Type      UserType `json:"type"`
+	Name      string   `json:"name"`
+	AvatarURL string   `json:"avatar_url"`
 }
 
 func (b baseUser) isUser() {}
@@ -138,7 +137,7 @@ type userDecoder struct {
 
 func (u *userDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Type typed.UserType `json:"type"`
+		Type UserType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -146,10 +145,10 @@ func (u *userDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.UserTypePerson:
+	case UserTypePerson:
 		u.User = &PersonUser{}
 
-	case typed.UserTypeBot:
+	case UserTypeBot:
 		u.User = &BotUser{}
 	}
 

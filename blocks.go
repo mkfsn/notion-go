@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mkfsn/notion-go/rest"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 type Block interface {
@@ -16,11 +15,11 @@ type Block interface {
 
 type BlockBase struct {
 	// Always "block".
-	Object typed.ObjectType `json:"object"`
+	Object ObjectType `json:"object"`
 	// Identifier for the block.
 	ID string `json:"id,omitempty"`
 	// Type of block.
-	Type typed.BlockType `json:"type"`
+	Type BlockType `json:"type"`
 	// Date and time when this block was created. Formatted as an ISO 8601 date time string.
 	CreatedTime *time.Time `json:"created_time,omitempty"`
 	// Date and time when this block was last updated. Formatted as an ISO 8601 date time string.
@@ -267,7 +266,7 @@ type blockDecoder struct {
 
 func (b *blockDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Type typed.BlockType `json:"type"`
+		Type BlockType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -275,34 +274,34 @@ func (b *blockDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.BlockTypeParagraph:
+	case BlockTypeParagraph:
 		b.Block = &ParagraphBlock{}
 
-	case typed.BlockTypeHeading1:
+	case BlockTypeHeading1:
 		b.Block = &Heading1Block{}
 
-	case typed.BlockTypeHeading2:
+	case BlockTypeHeading2:
 		b.Block = &Heading2Block{}
 
-	case typed.BlockTypeHeading3:
+	case BlockTypeHeading3:
 		b.Block = &Heading3Block{}
 
-	case typed.BlockTypeBulletedListItem:
+	case BlockTypeBulletedListItem:
 		b.Block = &BulletedListItemBlock{}
 
-	case typed.BlockTypeNumberedListItem:
+	case BlockTypeNumberedListItem:
 		b.Block = &NumberedListItemBlock{}
 
-	case typed.BlockTypeToDo:
+	case BlockTypeToDo:
 		b.Block = &ToDoBlock{}
 
-	case typed.BlockTypeToggle:
+	case BlockTypeToggle:
 		b.Block = &ToggleBlock{}
 
-	case typed.BlockTypeChildPage:
+	case BlockTypeChildPage:
 		b.Block = &ChildPageBlock{}
 
-	case typed.BlockTypeUnsupported:
+	case BlockTypeUnsupported:
 		b.Block = &UnsupportedBlock{}
 	}
 

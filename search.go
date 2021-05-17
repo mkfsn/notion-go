@@ -5,25 +5,24 @@ import (
 	"encoding/json"
 
 	"github.com/mkfsn/notion-go/rest"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 type SearchFilter struct {
 	// The value of the property to filter the results by. Possible values for object type include `page` or `database`.
 	// Limitation: Currently the only filter allowed is object which will filter by type of `object`
 	// (either `page` or `database`)
-	Value typed.SearchFilterValue `json:"value"`
+	Value SearchFilterValue `json:"value"`
 	// The name of the property to filter by. Currently the only property you can filter by is the object type.
 	// Possible values include `object`. Limitation: Currently the only filter allowed is `object` which will
 	// filter by type of object (either `page` or `database`)
-	Property typed.SearchFilterProperty `json:"property"`
+	Property SearchFilterProperty `json:"property"`
 }
 
 type SearchSort struct {
 	// The direction to sort.
-	Direction typed.SearchSortDirection `json:"direction"`
+	Direction SearchSortDirection `json:"direction"`
 	// The name of the timestamp to sort against. Possible values include `last_edited_time`.
-	Timestamp typed.SearchSortTimestamp `json:"timestamp"`
+	Timestamp SearchSortTimestamp `json:"timestamp"`
 }
 
 type SearchParameters struct {
@@ -99,7 +98,7 @@ type searchableObjectDecoder struct {
 
 func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Object typed.ObjectType `json:"object"`
+		Object ObjectType `json:"object"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -107,13 +106,13 @@ func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Object {
-	case typed.ObjectTypePage:
+	case ObjectTypePage:
 		s.SearchableObject = &Page{}
 
-	case typed.ObjectTypeDatabase:
+	case ObjectTypeDatabase:
 		s.SearchableObject = &Database{}
 
-	case typed.ObjectTypeBlock:
+	case ObjectTypeBlock:
 		return ErrUnknown
 	}
 

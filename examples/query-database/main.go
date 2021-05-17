@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/mkfsn/notion-go"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 func main() {
@@ -31,7 +30,7 @@ func main() {
 		Sorts: []notion.Sort{
 			{
 				Property:  "Created",
-				Direction: typed.SortDirectionAscending,
+				Direction: notion.SortDirectionAscending,
 			},
 		},
 	})

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mkfsn/notion-go/rest"
-	"github.com/mkfsn/notion-go/typed"
 )
 
 type Parent interface {
@@ -15,7 +14,7 @@ type Parent interface {
 }
 
 type baseParent struct {
-	Type typed.ParentType `json:"type"`
+	Type ParentType `json:"type"`
 }
 
 func (b baseParent) isParent() {}
@@ -54,7 +53,7 @@ type PageParentInput struct {
 
 type Page struct {
 	// Always "page".
-	Object typed.ObjectType `json:"object"`
+	Object ObjectType `json:"object"`
 	// Unique identifier of the page.
 	ID string `json:"id"`
 	// The page's parent
@@ -107,7 +106,7 @@ type basePropertyValue struct {
 	// The id may be used in place of name when creating or updating pages.
 	ID string `json:"id,omitempty"`
 	// Type of the property
-	Type typed.PropertyValueType `json:"type,omitempty"`
+	Type PropertyValueType `json:"type,omitempty"`
 }
 
 func (p basePropertyValue) isPropertyValue() {}
@@ -174,9 +173,9 @@ type NumberPropertyValue struct {
 }
 
 type SelectPropertyValueOption struct {
-	ID    string      `json:"id,omitempty"`
-	Name  string      `json:"name"`
-	Color typed.Color `json:"color,omitempty"`
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name"`
+	Color Color  `json:"color,omitempty"`
 }
 
 type SelectPropertyValue struct {
@@ -185,9 +184,9 @@ type SelectPropertyValue struct {
 }
 
 type MultiSelectPropertyValueOption struct {
-	ID    string      `json:"id"`
-	Name  string      `json:"name"`
-	Color typed.Color `json:"color"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Color Color  `json:"color"`
 }
 
 type MultiSelectPropertyValue struct {
@@ -208,7 +207,7 @@ type FormulaValue interface {
 }
 
 type baseFormulaValue struct {
-	Type typed.FormulaValueType `json:"type"`
+	Type FormulaValueType `json:"type"`
 }
 
 func (b baseFormulaValue) isFormulaValue() {}
@@ -430,7 +429,7 @@ type formulaValueDecoder struct {
 
 func (f *formulaValueDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Type typed.FormulaValueType `json:"type"`
+		Type FormulaValueType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -438,16 +437,16 @@ func (f *formulaValueDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.FormulaValueTypeString:
+	case FormulaValueTypeString:
 		f.FormulaValue = &StringFormulaValue{}
 
-	case typed.FormulaValueTypeNumber:
+	case FormulaValueTypeNumber:
 		f.FormulaValue = &NumberFormulaValue{}
 
-	case typed.FormulaValueTypeBoolean:
+	case FormulaValueTypeBoolean:
 		f.FormulaValue = &BooleanFormulaValue{}
 
-	case typed.FormulaValueTypeDate:
+	case FormulaValueTypeDate:
 		f.FormulaValue = &DateFormulaValue{}
 	}
 
@@ -460,7 +459,7 @@ type parentDecoder struct {
 
 func (p *parentDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Type typed.ParentType `json:"type"`
+		Type ParentType `json:"type"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -468,13 +467,13 @@ func (p *parentDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.ParentTypeDatabase:
+	case ParentTypeDatabase:
 		p.Parent = &DatabaseParent{}
 
-	case typed.ParentTypePage:
+	case ParentTypePage:
 		p.Parent = &PageParent{}
 
-	case typed.ParentTypeWorkspace:
+	case ParentTypeWorkspace:
 		p.Parent = &WorkspaceParent{}
 	}
 
@@ -487,7 +486,7 @@ type propertyValueDecoder struct {
 
 func (p *propertyValueDecoder) UnmarshalJSON(data []byte) error {
 	var decoder struct {
-		Type typed.PropertyValueType `json:"type,omitempty"`
+		Type PropertyValueType `json:"type,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &decoder); err != nil {
@@ -495,58 +494,58 @@ func (p *propertyValueDecoder) UnmarshalJSON(data []byte) error {
 	}
 
 	switch decoder.Type {
-	case typed.PropertyValueTypeRichText:
+	case PropertyValueTypeRichText:
 		p.PropertyValue = &RichTextPropertyValue{}
 
-	case typed.PropertyValueTypeNumber:
+	case PropertyValueTypeNumber:
 		p.PropertyValue = &NumberPropertyValue{}
 
-	case typed.PropertyValueTypeSelect:
+	case PropertyValueTypeSelect:
 		p.PropertyValue = &SelectPropertyValue{}
 
-	case typed.PropertyValueTypeMultiSelect:
+	case PropertyValueTypeMultiSelect:
 		p.PropertyValue = &MultiSelectPropertyValue{}
 
-	case typed.PropertyValueTypeDate:
+	case PropertyValueTypeDate:
 		p.PropertyValue = &DatePropertyValue{}
 
-	case typed.PropertyValueTypeFormula:
+	case PropertyValueTypeFormula:
 		p.PropertyValue = &FormulaPropertyValue{}
 
-	case typed.PropertyValueTypeRollup:
+	case PropertyValueTypeRollup:
 		p.PropertyValue = &RollupPropertyValue{}
 
-	case typed.PropertyValueTypeTitle:
+	case PropertyValueTypeTitle:
 		p.PropertyValue = &TitlePropertyValue{}
 
-	case typed.PropertyValueTypePeople:
+	case PropertyValueTypePeople:
 		p.PropertyValue = &PeoplePropertyValue{}
 
-	case typed.PropertyValueTypeFiles:
+	case PropertyValueTypeFiles:
 		p.PropertyValue = &FilesPropertyValue{}
 
-	case typed.PropertyValueTypeCheckbox:
+	case PropertyValueTypeCheckbox:
 		p.PropertyValue = &CheckboxPropertyValue{}
 
-	case typed.PropertyValueTypeURL:
+	case PropertyValueTypeURL:
 		p.PropertyValue = &URLPropertyValue{}
 
-	case typed.PropertyValueTypeEmail:
+	case PropertyValueTypeEmail:
 		p.PropertyValue = &EmailPropertyValue{}
 
-	case typed.PropertyValueTypePhoneNumber:
+	case PropertyValueTypePhoneNumber:
 		p.PropertyValue = &PhoneNumberPropertyValue{}
 
-	case typed.PropertyValueTypeCreatedTime:
+	case PropertyValueTypeCreatedTime:
 		p.PropertyValue = &CreatedTimePropertyValue{}
 
-	case typed.PropertyValueTypeCreatedBy:
+	case PropertyValueTypeCreatedBy:
 		p.PropertyValue = &CreatedByPropertyValue{}
 
-	case typed.PropertyValueTypeLastEditedTime:
+	case PropertyValueTypeLastEditedTime:
 		p.PropertyValue = &LastEditedTimePropertyValue{}
 
-	case typed.PropertyValueTypeLastEditedBy:
+	case PropertyValueTypeLastEditedBy:
 		p.PropertyValue = &LastEditedByPropertyValue{}
 
 	}
