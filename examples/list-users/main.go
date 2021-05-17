@@ -14,7 +14,7 @@ func main() {
 	resp, err := c.Users().List(context.Background(), notion.UsersListParameters{
 		PaginationParameters: notion.PaginationParameters{
 			StartCursor: "",
-			PageSize:    1,
+			PageSize:    10,
 		},
 	})
 

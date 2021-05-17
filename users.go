@@ -13,36 +13,6 @@ type User interface {
 	isUser()
 }
 
-func newUser(data []byte) (User, error) {
-	var base baseUser
-
-	if err := json.Unmarshal(data, &base); err != nil {
-		return nil, err
-	}
-
-	switch base.Type {
-	case typed.UserTypePerson:
-		var user PersonUser
-
-		if err := json.Unmarshal(data, &user); err != nil {
-			return nil, err
-		}
-
-		return user, nil
-
-	case typed.UserTypeBot:
-		var user BotUser
-
-		if err := json.Unmarshal(data, &user); err != nil {
-			return nil, err
-		}
-
-		return user, nil
-	}
-
-	return nil, ErrUnknown
-}
-
 type baseUser struct {
 	Object    string         `json:"object"`
 	ID        string         `json:"id"`
@@ -53,20 +23,24 @@ type baseUser struct {
 
 func (b baseUser) isUser() {}
 
+type Person struct {
+	Email string `json:"email"`
+}
+
 type PersonUser struct {
 	baseUser
-	Person *struct {
-		Email string `json:"email"`
-	} `json:"person"`
+	Person Person `json:"person"`
 }
+
+type Bot struct{}
 
 type BotUser struct {
 	baseUser
-	Bot interface{} `json:"bot"`
+	Bot Bot `json:"bot"`
 }
 
 type UsersRetrieveParameters struct {
-	UserID string `json:"-"`
+	UserID string `json:"-" url:"-"`
 }
 
 type UsersRetrieveResponse struct {
@@ -74,8 +48,15 @@ type UsersRetrieveResponse struct {
 }
 
 func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) (err error) {
-	u.User, err = newUser(data)
-	return
+	var decoder userDecoder
+
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return err
+	}
+
+	u.User = decoder.User
+
+	return nil
 }
 
 type UsersListParameters struct {
@@ -92,7 +73,7 @@ func (u *UsersListResponse) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Results []json.RawMessage `json:"results"`
+		Results []userDecoder `json:"results"`
 	}{
 		Alias: (*Alias)(u),
 	}
@@ -103,13 +84,8 @@ func (u *UsersListResponse) UnmarshalJSON(data []byte) error {
 
 	u.Results = make([]User, 0, len(alias.Results))
 
-	for _, result := range alias.Results {
-		user, err := newUser(result)
-		if err != nil {
-			return err
-		}
-
-		u.Results = append(u.Results, user)
+	for _, decoder := range alias.Results {
+		u.Results = append(u.Results, decoder.User)
 	}
 
 	return nil
@@ -154,4 +130,28 @@ func (u *usersClient) List(ctx context.Context, params UsersListParameters) (*Us
 		Receive(ctx, &result, &failure)
 
 	return &result, err
+}
+
+type userDecoder struct {
+	User
+}
+
+func (u *userDecoder) UnmarshalJSON(data []byte) error {
+	var decoder struct {
+		Type typed.UserType `json:"type"`
+	}
+
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return err
+	}
+
+	switch decoder.Type {
+	case typed.UserTypePerson:
+		u.User = &PersonUser{}
+
+	case typed.UserTypeBot:
+		u.User = &BotUser{}
+	}
+
+	return json.Unmarshal(data, u.User)
 }

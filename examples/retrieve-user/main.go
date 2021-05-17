@@ -17,5 +17,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("%#v\n", resp)
+	log.Printf("%#v\n", resp.User)
 }

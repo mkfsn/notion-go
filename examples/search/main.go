@@ -27,5 +27,7 @@ func main() {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	log.Printf("response: %#v\n", resp)
+	for _, object := range resp.Results {
+		log.Printf("object: %#v\n", object)
+	}
 }

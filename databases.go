@@ -22,15 +22,13 @@ type Database struct {
 
 func (d Database) isSearchable() {}
 
-// FIXME: reduce the complexity
-// nolint:gocyclo,gocognit,funlen
 func (d *Database) UnmarshalJSON(data []byte) error {
 	type Alias Database
 
 	alias := struct {
 		*Alias
-		Title      []json.RawMessage          `json:"title"`
-		Properties map[string]json.RawMessage `json:"properties"`
+		Title      []richTextDecoder          `json:"title"`
+		Properties map[string]propertyDecoder `json:"properties"`
 	}{
 		Alias: (*Alias)(d),
 	}
@@ -40,224 +38,15 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 	}
 
 	d.Title = make([]RichText, 0, len(alias.Title))
-	d.Properties = make(map[string]Property)
 
-	for _, title := range alias.Title {
-		var base BaseRichText
-
-		if err := json.Unmarshal(title, &base); err != nil {
-			return err
-		}
-
-		switch base.Type {
-		case typed.RichTextTypeText:
-			var richText RichTextText
-
-			if err := json.Unmarshal(title, &richText); err != nil {
-				return err
-			}
-
-			d.Title = append(d.Title, richText)
-
-		case typed.RichTextTypeMention:
-			var richText RichTextMention
-
-			if err := json.Unmarshal(title, &richText); err != nil {
-				return err
-			}
-
-			d.Title = append(d.Title, richText)
-
-		case typed.RichTextTypeEquation:
-			var richText RichTextEquation
-
-			if err := json.Unmarshal(title, &richText); err != nil {
-				return err
-			}
-
-			d.Title = append(d.Title, richText)
-		}
+	for _, decoder := range alias.Title {
+		d.Title = append(d.Title, decoder.RichText)
 	}
 
-	for name, value := range alias.Properties {
-		var base baseProperty
+	d.Properties = make(map[string]Property)
 
-		if err := json.Unmarshal(value, &base); err != nil {
-			return err
-		}
-
-		switch base.Type {
-		case typed.PropertyTypeTitle:
-			var property TitleProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeRichText:
-			var property RichTextProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeNumber:
-			var property NumberProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeSelect:
-			var property SelectProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeMultiSelect:
-			var property MultiSelectProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeDate:
-			var property DateProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypePeople:
-			var property PeopleProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeFile:
-			var property FileProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeCheckbox:
-			var property CheckboxProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeURL:
-			var property URLProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeEmail:
-			var property EmailProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypePhoneNumber:
-			var property PhoneNumberProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeFormula:
-			var property FormulaProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeRelation:
-			var property RelationProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeRollup:
-			var property RollupProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeCreatedTime:
-			var property CreatedTimeProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeCreatedBy:
-			var property CreatedByProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeLastEditedTime:
-			var property LastEditedTimeProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-
-		case typed.PropertyTypeLastEditedBy:
-			var property LastEditedByProperty
-
-			if err := json.Unmarshal(value, &property); err != nil {
-				return err
-			}
-
-			d.Properties[name] = property
-		}
+	for name, decoder := range alias.Properties {
+		d.Properties[name] = decoder.Property
 	}
 
 	return nil
@@ -280,45 +69,6 @@ type Annotations struct {
 
 type RichText interface {
 	isRichText()
-}
-
-func newRichText(data []byte) (RichText, error) {
-	var base BaseRichText
-
-	if err := json.Unmarshal(data, &base); err != nil {
-		return nil, err
-	}
-
-	switch base.Type {
-	case typed.RichTextTypeText:
-		var richText RichTextText
-
-		if err := json.Unmarshal(data, &richText); err != nil {
-			return nil, err
-		}
-
-		return richText, nil
-
-	case typed.RichTextTypeMention:
-		var richText RichTextMention
-
-		if err := json.Unmarshal(data, &richText); err != nil {
-			return nil, err
-		}
-
-		return richText, nil
-
-	case typed.RichTextTypeEquation:
-		var richText RichTextEquation
-
-		if err := json.Unmarshal(data, &richText); err != nil {
-			return nil, err
-		}
-
-		return richText, nil
-	}
-
-	return nil, ErrUnknown
 }
 
 type BaseRichText struct {
@@ -807,4 +557,106 @@ func (d *databasesClient) Query(ctx context.Context, params DatabasesQueryParame
 		Receive(ctx, &result, &failure)
 
 	return &result, err
+}
+
+type richTextDecoder struct {
+	RichText
+}
+
+func (r *richTextDecoder) UnmarshalJSON(data []byte) error {
+	var decoder struct {
+		Type typed.RichTextType `json:"type"`
+	}
+
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return err
+	}
+
+	switch decoder.Type {
+	case typed.RichTextTypeText:
+		r.RichText = &RichTextText{}
+
+	case typed.RichTextTypeMention:
+		r.RichText = &RichTextMention{}
+
+	case typed.RichTextTypeEquation:
+		r.RichText = &RichTextEquation{}
+	}
+
+	return json.Unmarshal(data, &r.RichText)
+}
+
+type propertyDecoder struct {
+	Property
+}
+
+func (p *propertyDecoder) Unmarshal(data []byte) error {
+	var decoder struct {
+		Type typed.PropertyType `json:"type"`
+	}
+
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return err
+	}
+
+	switch decoder.Type {
+	case typed.PropertyTypeTitle:
+		p.Property = &TitleProperty{}
+
+	case typed.PropertyTypeRichText:
+		p.Property = &RichTextProperty{}
+
+	case typed.PropertyTypeNumber:
+		p.Property = &NumberProperty{}
+
+	case typed.PropertyTypeSelect:
+		p.Property = &SelectProperty{}
+
+	case typed.PropertyTypeMultiSelect:
+		p.Property = &MultiSelectProperty{}
+
+	case typed.PropertyTypeDate:
+		p.Property = &DateProperty{}
+
+	case typed.PropertyTypePeople:
+		p.Property = &PeopleProperty{}
+
+	case typed.PropertyTypeFile:
+		p.Property = &FileProperty{}
+
+	case typed.PropertyTypeCheckbox:
+		p.Property = &CheckboxProperty{}
+
+	case typed.PropertyTypeURL:
+		p.Property = &URLProperty{}
+
+	case typed.PropertyTypeEmail:
+		p.Property = &EmailProperty{}
+
+	case typed.PropertyTypePhoneNumber:
+		p.Property = &PhoneNumberProperty{}
+
+	case typed.PropertyTypeFormula:
+		p.Property = &FormulaProperty{}
+
+	case typed.PropertyTypeRelation:
+		p.Property = &RelationProperty{}
+
+	case typed.PropertyTypeRollup:
+		p.Property = &RollupProperty{}
+
+	case typed.PropertyTypeCreatedTime:
+		p.Property = &CreatedTimeProperty{}
+
+	case typed.PropertyTypeCreatedBy:
+		p.Property = &CreatedByProperty{}
+
+	case typed.PropertyTypeLastEditedTime:
+		p.Property = &LastEditedTimeProperty{}
+
+	case typed.PropertyTypeLastEditedBy:
+		p.Property = &LastEditedByProperty{}
+	}
+
+	return json.Unmarshal(data, &p.Property)
 }

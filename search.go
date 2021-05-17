@@ -47,7 +47,7 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Results []json.RawMessage `json:"results"`
+		Results []searchableObjectDecoder `json:"results"`
 	}{
 		Alias: (*Alias)(s),
 	}
@@ -58,37 +58,8 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 	s.Results = make([]SearchableObject, 0, len(alias.Results))
 
-	for _, result := range alias.Results {
-		var base struct {
-			Object typed.ObjectType `json:"object"`
-		}
-
-		if err := json.Unmarshal(result, &base); err != nil {
-			return err
-		}
-
-		switch base.Object {
-		case typed.ObjectTypePage:
-			var object Page
-
-			if err := json.Unmarshal(result, &object); err != nil {
-				return err
-			}
-
-			s.Results = append(s.Results, object)
-
-		case typed.ObjectTypeDatabase:
-			var object Database
-
-			if err := json.Unmarshal(result, &object); err != nil {
-				return err
-			}
-
-			s.Results = append(s.Results, object)
-
-		case typed.ObjectTypeBlock:
-			continue
-		}
+	for _, decoder := range alias.Results {
+		s.Results = append(s.Results, decoder.SearchableObject)
 	}
 
 	return nil
@@ -120,4 +91,31 @@ func (s *searchClient) Search(ctx context.Context, params SearchParameters) (*Se
 		Receive(ctx, &result, &failure)
 
 	return &result, err
+}
+
+type searchableObjectDecoder struct {
+	SearchableObject
+}
+
+func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
+	var decoder struct {
+		Object typed.ObjectType `json:"object"`
+	}
+
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return err
+	}
+
+	switch decoder.Object {
+	case typed.ObjectTypePage:
+		s.SearchableObject = &Page{}
+
+	case typed.ObjectTypeDatabase:
+		s.SearchableObject = &Database{}
+
+	case typed.ObjectTypeBlock:
+		return ErrUnknown
+	}
+
+	return json.Unmarshal(data, s.SearchableObject)
 }
