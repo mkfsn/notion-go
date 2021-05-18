@@ -50,7 +50,7 @@ c.Pages().Update(...)
 // List all users
 c.Users().List(...)
 
-// Retrieve a users
+// Retrieve a user
 c.Users().Retrieve(...)
 
 // Search
