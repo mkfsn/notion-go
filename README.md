@@ -24,10 +24,10 @@ go get -u github.com/mkfsn/notion-go
 c := notion.New("<NOTION_AUTH_TOKEN>")
 
 // Retrieve block children
-c.Blocks().List(...)
+c.Blocks().Children().List(...)
 
 // Append block children
-c.Blocks().Append(...)
+c.Blocks().Children().Append(...)
 
 // List databases
 c.Databases().List(...)
