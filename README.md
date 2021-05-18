@@ -1,5 +1,6 @@
 # notion-go
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/mkfsn/notion-go)](https://goreportcard.com/report/github.com/mkfsn/notion-go)
 [![Actions Status](https://github.com/mkfsn/notion-go/actions/workflows/develop.yaml/badge.svg)](https://github.com/mkfsn/notion-go/actions)
 [![codecov](https://codecov.io/gh/mkfsn/notion-go/branch/develop/graph/badge.svg?token=NA64P6EPQ0)](https://codecov.io/gh/mkfsn/notion-go)
 
