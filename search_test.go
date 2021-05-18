@@ -171,7 +171,7 @@ func Test_searchClient_Search(t *testing.T) {
 											Strikethrough: false,
 											Underline:     false,
 											Code:          false,
-											Color:         DefaultColor,
+											Color:         ColorDefault,
 										},
 									},
 									Text: TextObject{
@@ -227,7 +227,7 @@ func Test_searchClient_Search(t *testing.T) {
 													Strikethrough: false,
 													Underline:     false,
 													Code:          false,
-													Color:         DefaultColor,
+													Color:         ColorDefault,
 												},
 											},
 											Text: TextObject{

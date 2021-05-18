@@ -183,14 +183,14 @@ type NumberProperty struct {
 }
 
 type SelectOption struct {
-	Name  string `json:"name"`
 	ID    string `json:"id"`
+	Name  string `json:"name"`
 	Color Color  `json:"color"`
 }
 
 type MultiSelectOption struct {
-	Name  string `json:"name"`
 	ID    string `json:"id"`
+	Name  string `json:"name"`
 	Color Color  `json:"color"`
 }
 
@@ -247,20 +247,24 @@ type PhoneNumberProperty struct {
 	PhoneNumber interface{} `json:"phone_number"`
 }
 
+type Formula struct {
+	Expression string `json:"expression"`
+}
+
 type FormulaProperty struct {
 	baseProperty
-	Formula struct {
-		Expression string `json:"expression"`
-	} `json:"formula"`
+	Formula Formula `json:"formula"`
+}
+
+type Relation struct {
+	DatabaseID         string  `json:"database_id"`
+	SyncedPropertyName *string `json:"synced_property_name"`
+	SyncedPropertyID   *string `json:"synced_property_id"`
 }
 
 type RelationProperty struct {
 	baseProperty
-	Relation struct {
-		DatabaseID         string  `json:"database_id"`
-		SyncedPropertyName *string `json:"synced_property_name"`
-		SyncedPropertyID   *string `json:"synced_property_id"`
-	} `json:"relation"`
+	Relation Relation `json:"relation"`
 }
 
 type RollupPropertyOption struct {
@@ -297,7 +301,7 @@ type LastEditedByProperty struct {
 }
 
 type DatabasesRetrieveParameters struct {
-	DatabaseID string `json:"-"`
+	DatabaseID string `json:"-" url:"-"`
 }
 
 type DatabasesRetrieveResponse struct {
@@ -357,8 +361,8 @@ type NumberFilter struct {
 	LessThan             *float64 `json:"less_than,omitempty"`
 	GreaterThanOrEqualTo *float64 `json:"greater_than_or_equal_to,omitempty"`
 	LessThanOrEqualTo    *float64 `json:"less_than_or_equal_to,omitempty"`
-	IsEmpty              *bool    `json:"is_empty,omitempty"`
-	IsNotEmpty           *bool    `json:"is_not_empty,omitempty"`
+	IsEmpty              bool     `json:"is_empty,omitempty"`
+	IsNotEmpty           bool     `json:"is_not_empty,omitempty"`
 }
 
 // SingleNumberFilter is a number filter condition applies to database properties of type "number".
@@ -368,8 +372,8 @@ type SingleNumberFilter struct {
 }
 
 type CheckboxFilter struct {
-	Equals       *bool `json:"equals,omitempty"`
-	DoesNotEqual *bool `json:"does_not_equal,omitempty"`
+	Equals       bool `json:"equals,omitempty"`
+	DoesNotEqual bool `json:"does_not_equal,omitempty"`
 }
 
 // SingleCheckboxFilter is a checkbox filter condition applies to database properties of type "checkbox".
@@ -381,8 +385,8 @@ type SingleCheckboxFilter struct {
 type SelectFilter struct {
 	Equals       *string `json:"equals,omitempty"`
 	DoesNotEqual *string `json:"does_not_equal,omitempty"`
-	IsEmpty      *bool   `json:"is_empty,omitempty"`
-	IsNotEmpty   *bool   `json:"is_not_empty,omitempty"`
+	IsEmpty      bool    `json:"is_empty,omitempty"`
+	IsNotEmpty   bool    `json:"is_not_empty,omitempty"`
 }
 
 // SingleSelectFilter is a select filter condition applies to database properties of type "select".
@@ -394,8 +398,8 @@ type SingleSelectFilter struct {
 type MultiSelectFilter struct {
 	Contains       *string `json:"contains,omitempty"`
 	DoesNotContain *string `json:"does_not_contain,omitempty"`
-	IsEmpty        *bool   `json:"is_empty,omitempty"`
-	IsNotEmpty     *bool   `json:"is_not_empty,omitempty"`
+	IsEmpty        bool    `json:"is_empty,omitempty"`
+	IsNotEmpty     bool    `json:"is_not_empty,omitempty"`
 }
 
 // SingleMultiSelectFilter is a multi-select filter condition applies to database properties of type "multi_select".
@@ -409,8 +413,8 @@ type DateFilter struct {
 	Before     *string                `json:"before,omitempty"`
 	After      *string                `json:"after,omitempty"`
 	OnOrBefore *string                `json:"on_or_before,omitempty"`
-	IsEmpty    *bool                  `json:"is_empty,omitempty"`
-	IsNotEmpty *bool                  `json:"is_not_empty,omitempty"`
+	IsEmpty    bool                   `json:"is_empty,omitempty"`
+	IsNotEmpty bool                   `json:"is_not_empty,omitempty"`
 	OnOrAfter  *string                `json:"on_or_after,omitempty"`
 	PastWeek   map[string]interface{} `json:"past_week,omitempty"`
 	PastMonth  map[string]interface{} `json:"past_month,omitempty"`
@@ -431,8 +435,8 @@ type SingleDateFilter struct {
 type PeopleFilter struct {
 	Contains       *string `json:"contains,omitempty"`
 	DoesNotContain *string `json:"does_not_contain,omitempty"`
-	IsEmpty        *bool   `json:"is_empty,omitempty"`
-	IsNotEmpty     *bool   `json:"is_not_empty,omitempty"`
+	IsEmpty        bool    `json:"is_empty,omitempty"`
+	IsNotEmpty     bool    `json:"is_not_empty,omitempty"`
 }
 
 // SinglePeopleFilter is a people filter condition applies to database properties of types "people", "created_by", and "last_edited_by".
@@ -444,8 +448,8 @@ type SinglePeopleFilter struct {
 }
 
 type FilesFilter struct {
-	IsEmpty    *bool `json:"is_empty,omitempty"`
-	IsNotEmpty *bool `json:"is_not_empty,omitempty"`
+	IsEmpty    bool `json:"is_empty,omitempty"`
+	IsNotEmpty bool `json:"is_not_empty,omitempty"`
 }
 
 // SingleFilesFilter is a files filter condition applies to database properties of type "files".
@@ -457,8 +461,8 @@ type SingleFilesFilter struct {
 type RelationFilter struct {
 	Contains       *string `json:"contains,omitempty"`
 	DoesNotContain *string `json:"does_not_contain,omitempty"`
-	IsEmpty        *bool   `json:"is_empty,omitempty"`
-	IsNotEmpty     *bool   `json:"is_not_empty,omitempty"`
+	IsEmpty        bool    `json:"is_empty,omitempty"`
+	IsNotEmpty     bool    `json:"is_not_empty,omitempty"`
 }
 
 // SingleRelationFilter is a relation filter condition applies to database properties of type "relation".
@@ -490,13 +494,13 @@ func (c CompoundFilter) isFilter() {}
 type DatabasesQueryParameters struct {
 	PaginationParameters
 	// Identifier for a Notion database.
-	DatabaseID string `json:"-"`
+	DatabaseID string `json:"-" url:"-"`
 	// When supplied, limits which pages are returned based on the
 	// [filter conditions](https://developers.com/reference-link/post-database-query-filter).
-	Filter Filter `json:"filter,omitempty"`
+	Filter Filter `json:"filter,omitempty" url:"-"`
 	// When supplied, orders the results based on the provided
 	// [sort criteria](https://developers.com/reference-link/post-database-query-sort).
-	Sorts []Sort `json:"sorts,omitempty"`
+	Sorts []Sort `json:"sorts,omitempty" url:"-"`
 }
 
 type DatabasesQueryResponse struct {
@@ -527,8 +531,6 @@ func (d *databasesClient) Retrieve(ctx context.Context, params DatabasesRetrieve
 
 	err := d.restClient.New().Get().
 		Endpoint(strings.Replace(APIDatabasesRetrieveEndpoint, "{database_id}", params.DatabaseID, 1)).
-		QueryStruct(params).
-		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
 	return &result, err // nolint:wrapcheck
@@ -542,7 +544,6 @@ func (d *databasesClient) List(ctx context.Context, params DatabasesListParamete
 	err := d.restClient.New().Get().
 		Endpoint(APIDatabasesListEndpoint).
 		QueryStruct(params).
-		BodyJSON(params).
 		Receive(ctx, &result, &failure)
 
 	return &result, err // nolint:wrapcheck
