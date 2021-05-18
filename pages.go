@@ -195,12 +195,14 @@ type MultiSelectPropertyValue struct {
 	MultiSelect []MultiSelectPropertyValueOption `json:"multi_select"`
 }
 
+type Date struct {
+	Start string  `json:"start"`
+	End   *string `json:"end"`
+}
+
 type DatePropertyValue struct {
 	basePropertyValue
-	Date struct {
-		Start string  `json:"start"`
-		End   *string `json:"end"`
-	} `json:"date"`
+	Date Date `json:"date"`
 }
 
 type FormulaValue interface {
@@ -257,6 +259,15 @@ func (f *FormulaPropertyValue) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type PageReference struct {
+	ID string `json:"id"`
+}
+
+type RelationPropertyValue struct {
+	basePropertyValue
+	Relation []PageReference `json:"relation"`
+}
+
 type RollupValueType interface {
 	isRollupValueType()
 }
@@ -292,11 +303,13 @@ type PeoplePropertyValue struct {
 	People []User `json:"people"`
 }
 
+type File struct {
+	Name string `json:"name"`
+}
+
 type FilesPropertyValue struct {
 	basePropertyValue
-	Files []struct {
-		Name string `json:"name"`
-	} `json:"files"`
+	Files []File `json:"files"`
 }
 
 type CheckboxPropertyValue struct {
@@ -517,6 +530,9 @@ func (p *propertyValueDecoder) UnmarshalJSON(data []byte) error {
 
 	case PropertyValueTypeFormula:
 		p.PropertyValue = &FormulaPropertyValue{}
+
+	case PropertyValueTypeRelation:
+		p.PropertyValue = &RelationPropertyValue{}
 
 	case PropertyValueTypeRollup:
 		p.PropertyValue = &RollupPropertyValue{}
