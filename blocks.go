@@ -26,7 +26,7 @@ type BlockBase struct {
 	// Date and time when this block was last updated. Formatted as an ISO 8601 date time string.
 	LastEditedTime *time.Time `json:"last_edited_time,omitempty"`
 	// Whether or not the block has children blocks nested within it.
-	HasChildren *bool `json:"has_children,omitempty"`
+	HasChildren bool `json:"has_children,omitempty"`
 }
 
 func (b BlockBase) isBlock() {}
@@ -41,15 +41,17 @@ type HeadingBlock struct {
 }
 
 func (h *HeadingBlock) UnmarshalJSON(data []byte) error {
-	var text []richTextDecoder
+	var alias struct {
+		Text []richTextDecoder `json:"text"`
+	}
 
-	if err := json.Unmarshal(data, &text); err != nil {
+	if err := json.Unmarshal(data, &alias); err != nil {
 		return fmt.Errorf("failed to unmarshal HeadingBlock: %w", err)
 	}
 
-	h.Text = make([]RichText, 0, len(text))
+	h.Text = make([]RichText, 0, len(alias.Text))
 
-	for _, decoder := range text {
+	for _, decoder := range alias.Text {
 		h.Text = append(h.Text, decoder.RichText)
 	}
 
@@ -166,7 +168,7 @@ type BlocksChildrenListParameters struct {
 	PaginationParameters
 
 	// Identifier for a block
-	BlockID string `json:"-"`
+	BlockID string `json:"-" url:"-"`
 }
 
 type BlocksChildrenListResponse struct {
@@ -243,7 +245,6 @@ func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenLi
 	err := b.restClient.New().Get().
 		Endpoint(strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)).
 		QueryStruct(params).
-		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
 	return &result, err // nolint:wrapcheck

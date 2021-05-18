@@ -86,7 +86,8 @@ type BaseRichText struct {
 func (r BaseRichText) isRichText() {}
 
 type Link struct {
-	Type string `json:"type"`
+	// TODO: What is this? Is this still in used?
+	Type string `json:"type,omitempty"`
 	URL  string `json:"url"`
 }
 
