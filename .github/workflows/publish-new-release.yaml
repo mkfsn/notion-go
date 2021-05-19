@@ -36,5 +36,5 @@ jobs:
         with:
           version: ${{ env.RELEASE_VERSION }}
           tag: ${{ env.RELEASE_VERSION }}
-          name: Release ${{ env.RELEASE_VERSION }}
+          name: ${{ env.RELEASE_VERSION }}
           publish: false
