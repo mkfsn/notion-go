@@ -4,6 +4,9 @@
 [![Actions Status](https://github.com/mkfsn/notion-go/actions/workflows/develop.yaml/badge.svg)](https://github.com/mkfsn/notion-go/actions)
 [![codecov](https://codecov.io/gh/mkfsn/notion-go/branch/develop/graph/badge.svg?token=NA64P6EPQ0)](https://codecov.io/gh/mkfsn/notion-go)
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/mkfsn/notion-go.svg)](https://pkg.go.dev/github.com/mkfsn/notion-go)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mkfsn/notion-go)
+[![License](https://img.shields.io/github/license/mkfsn/notion-go.svg)](./LICENSE.md)
 
 A go client for the [Notion API](https://developers.notion.com/)
 
