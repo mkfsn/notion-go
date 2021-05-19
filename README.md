@@ -4,6 +4,9 @@
 [![Actions Status](https://github.com/mkfsn/notion-go/actions/workflows/develop.yaml/badge.svg)](https://github.com/mkfsn/notion-go/actions)
 [![codecov](https://codecov.io/gh/mkfsn/notion-go/branch/develop/graph/badge.svg?token=NA64P6EPQ0)](https://codecov.io/gh/mkfsn/notion-go)
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/mkfsn/notion-go.svg)](https://pkg.go.dev/github.com/mkfsn/notion-go)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mkfsn/notion-go)
+[![License](https://img.shields.io/github/license/mkfsn/notion-go.svg)](./LICENSE.md)
 
 A go client for the [Notion API](https://developers.notion.com/)
 
@@ -24,37 +27,37 @@ go get -u github.com/mkfsn/notion-go
 c := notion.New("<NOTION_AUTH_TOKEN>")
 
 // Retrieve block children
-c.Blocks().Children().List(...)
+c.Blocks().Children().List(context.Background(), notion.BlocksChildrenListParameters{...})
 
 // Append block children
-c.Blocks().Children().Append(...)
+c.Blocks().Children().Append(context.Background(), notion.BlocksChildrenAppendParameters{...})
 
 // List databases
-c.Databases().List(...)
+c.Databases().List(context.Background(), notion.DatabasesListParameters{...})
 
 // Query a database
-c.Databases().Query(...)
+c.Databases().Query(context.Background(), notion.DatabasesQueryParameters{...})
 
 // Retrieve a database
-c.Databases().Retrieve(...)
+c.Databases().Retrieve(context.Background(), notion.DatabasesRetrieveParameters{...})
 
 // Create a page
-c.Pages().Create(...)
+c.Pages().Create(context.Background(), notion.PagesCreateParameters{...})
 
 // Retrieve a page
-c.Pages().Retreive(...)
+c.Pages().Retreive(context.Background(), notion.PagesRetrieveParameters{...})
 
 // Update page properties
-c.Pages().Update(...)
+c.Pages().Update(context.Background(), notion.PagesUpdateParameters{...})
 
 // List all users
-c.Users().List(...)
+c.Users().List(context.Background(), notion.UsersListParameters{...})
 
 // Retrieve a user
-c.Users().Retrieve(...)
+c.Users().Retrieve(context.Background(), notion.UsersRetrieveParameters{...})
 
 // Search
-c.Search(...)
+c.Search(context.Background(), notion.SearchParameters{...})
 ```
 
 For more information, please see [examples](./examples).
