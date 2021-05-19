@@ -353,7 +353,7 @@ type LastEditedByPropertyValue struct {
 }
 
 type PagesRetrieveParameters struct {
-	PageID string
+	PageID string `json:"-" url:"-"`
 }
 
 type PagesRetrieveResponse struct {
@@ -405,8 +405,6 @@ func (p *pagesClient) Retrieve(ctx context.Context, params PagesRetrieveParamete
 
 	err := p.restClient.New().Get().
 		Endpoint(strings.Replace(APIPagesRetrieveEndpoint, "{page_id}", params.PageID, 1)).
-		QueryStruct(params).
-		BodyJSON(nil).
 		Receive(ctx, &result, &failure)
 
 	return &result, err // nolint:wrapcheck
