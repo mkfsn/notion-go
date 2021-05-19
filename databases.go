@@ -77,7 +77,7 @@ type BaseRichText struct {
 	// (Optional) The URL of any link or internal Notion mention in this text, if any.
 	Href string `json:"href,omitempty"`
 	// Type of this rich text object.
-	Type RichTextType `json:"type"`
+	Type RichTextType `json:"type,omitempty"`
 	// All annotations that apply to this rich text.
 	// Annotations include colors and bold/italics/underline/strikethrough.
 	Annotations *Annotations `json:"annotations,omitempty"`
