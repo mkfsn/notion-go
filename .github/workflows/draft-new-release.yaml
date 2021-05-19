@@ -1,11 +1,9 @@
 name: "Draft new release"
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'The version to release'
-        required: true
+  push:
+    branches:
+      - release/v*.*.*
 
 jobs:
   draft-new-release:
@@ -14,24 +12,25 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Extract version from branch name
+        if: startsWith(github.event.pull_request.head.ref, 'release/')
+        run: |
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          VERSION=${BRANCH_NAME#release/}
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Validate the version
         uses: actions-ecosystem/action-regex-match@v2
         with:
-          text: ${{ github.event.inputs.version }}
+          text: ${{ env.RELEASE_VERSION }}
           regex: '^v\d+(\.\d+){2}$'
-
-      - name: Create release branch
-        run: git checkout -b release/${{ github.event.inputs.version }}
-
-      - name: Push new branch
-        run: git push origin release/${{ github.event.inputs.version }}
 
       - name: Create pull request
         uses: thomaseizinger/create-pull-request@1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          head: release/${{ github.event.inputs.version }}
+          head: release/${{ env.RELEASE_VERSION }}
           base: main
-          title: Release version ${{ github.event.inputs.version }}
+          title: Release version ${{ env.RELEASE_VERSION }}
           reviewers: ${{ github.actor }}
