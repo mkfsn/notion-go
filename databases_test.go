@@ -16,6 +16,7 @@ func Test_databasesClient_List(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -40,7 +41,12 @@ func Test_databasesClient_List(t *testing.T) {
 			name: "List two databases in one page",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "3e83b541-190b-4450-bfcc-835a7804d5b1",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 3e83b541-190b-4450-bfcc-835a7804d5b1", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/databases?page_size=2", request.RequestURI)
 
@@ -161,10 +167,12 @@ func Test_databasesClient_List(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			d := &databasesClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := d.List(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Databases().List(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
@@ -180,6 +188,7 @@ func Test_databasesClient_Query(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -204,7 +213,12 @@ func Test_databasesClient_Query(t *testing.T) {
 			name: "Query database with filter and sort",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "22e5435c-01f7-4d68-ad8c-203948e96b0b",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 22e5435c-01f7-4d68-ad8c-203948e96b0b", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodPost, request.Method)
 					assert.Equal(t, "/v1/databases/897e5a76ae524b489fdfe71f5945d1af/query", request.RequestURI)
 
@@ -400,10 +414,12 @@ func Test_databasesClient_Query(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 
-			d := &databasesClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := d.Query(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Databases().Query(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
@@ -419,6 +435,7 @@ func Test_databasesClient_Retrieve(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -443,7 +460,12 @@ func Test_databasesClient_Retrieve(t *testing.T) {
 			name: "Retrieve database",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "cf0d2546-ac5c-4d2e-8c39-80dad88a5208",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer cf0d2546-ac5c-4d2e-8c39-80dad88a5208", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/databases/668d797c-76fa-4934-9b05-ad288df2d136", request.RequestURI)
 
@@ -797,10 +819,12 @@ func Test_databasesClient_Retrieve(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			d := &databasesClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := d.Retrieve(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Databases().Retrieve(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return

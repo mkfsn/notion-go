@@ -16,6 +16,7 @@ func Test_blocksChildrenClient_List(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -40,7 +41,12 @@ func Test_blocksChildrenClient_List(t *testing.T) {
 			name: "List 3 block children in a page",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "59642182-381f-458b-8144-4cc0750383c1",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 59642182-381f-458b-8144-4cc0750383c1", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/blocks/b55c9c91-384d-452b-81db-d1ef79372b75/children?page_size=100", request.RequestURI)
 
@@ -313,10 +319,12 @@ func Test_blocksChildrenClient_List(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			d := &blocksChildrenClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := d.List(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Blocks().Children().List(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
@@ -332,6 +340,7 @@ func Test_blocksChildrenClient_Append(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -356,7 +365,12 @@ func Test_blocksChildrenClient_Append(t *testing.T) {
 			name: "Append children successfully",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "54b85fbe-69c3-4726-88a6-0070bcaea59d",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 54b85fbe-69c3-4726-88a6-0070bcaea59d", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodPatch, request.Method)
 					assert.Equal(t, "/v1/blocks/9bd15f8d-8082-429b-82db-e6c4ea88413b/children", request.RequestURI)
 					assert.Equal(t, "application/json", request.Header.Get("Content-Type"))
@@ -518,10 +532,12 @@ func Test_blocksChildrenClient_Append(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			d := &blocksChildrenClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := d.Append(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Blocks().Children().Append(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return

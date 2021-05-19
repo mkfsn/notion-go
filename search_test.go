@@ -15,6 +15,7 @@ func Test_searchClient_Search(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -39,7 +40,12 @@ func Test_searchClient_Search(t *testing.T) {
 			name: "Search two objects in one page",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "39686a40-3364-4499-8639-185740546d42",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 39686a40-3364-4499-8639-185740546d42", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodPost, request.Method)
 					assert.Equal(t, "/v1/search?page_size=2", request.RequestURI)
 
@@ -251,10 +257,12 @@ func Test_searchClient_Search(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
+			defer mockHTTPServer.Close()
 
-			sut := &searchClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
 
 			got, err := sut.Search(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
