@@ -23,12 +23,14 @@ jobs:
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Validate the version
+        id: regex-match
         uses: actions-ecosystem/action-regex-match@v2
         with:
           text: ${{ env.RELEASE_VERSION }}
           regex: '^v\d+(\.\d+){2}$'
 
       - name: Create Release
+        if: ${{ steps.regex-match.outputs.match != '' }}
         id: generate_changelog
         uses: release-drafter/release-drafter@v5
         env:

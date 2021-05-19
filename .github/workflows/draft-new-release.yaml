@@ -15,17 +15,19 @@ jobs:
       - name: Extract version from branch name
         if: startsWith(github.event.pull_request.head.ref, 'release/')
         run: |
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          BRANCH_NAME="${{ echo ${GITHUB_REF#refs/heads/} }}"
           VERSION=${BRANCH_NAME#release/}
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Validate the version
+        id: regex-match
         uses: actions-ecosystem/action-regex-match@v2
         with:
           text: ${{ env.RELEASE_VERSION }}
           regex: '^v\d+(\.\d+){2}$'
 
       - name: Create pull request
+        if: ${{ steps.regex-match.outputs.match != '' }}
         uses: thomaseizinger/create-pull-request@1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
