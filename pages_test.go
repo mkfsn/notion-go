@@ -16,6 +16,7 @@ func Test_pagesClient_Retrieve(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -40,7 +41,12 @@ func Test_pagesClient_Retrieve(t *testing.T) {
 			name: "Retrieve a page by page_id",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "6cf01c0d-3b5e-49ec-a45e-43c1879cf41e",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 6cf01c0d-3b5e-49ec-a45e-43c1879cf41e", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/pages/b55c9c91-384d-452b-81db-d1ef79372b75", request.RequestURI)
 
@@ -168,10 +174,12 @@ func Test_pagesClient_Retrieve(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			p := &pagesClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := p.Retrieve(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Pages().Retrieve(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
@@ -187,6 +195,7 @@ func Test_pagesClient_Create(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -211,7 +220,12 @@ func Test_pagesClient_Create(t *testing.T) {
 			name: "Create a new page",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "0747d2ee-13f0-47b1-950f-511d2c87180d",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 0747d2ee-13f0-47b1-950f-511d2c87180d", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodPost, request.Method)
 					assert.Equal(t, "/v1/pages", request.RequestURI)
 					assert.Equal(t, "application/json", request.Header.Get("Content-Type"))
@@ -538,10 +552,12 @@ func Test_pagesClient_Create(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			p := &pagesClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := p.Create(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Pages().Create(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
@@ -557,6 +573,7 @@ func Test_pagesClient_Update(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -581,7 +598,12 @@ func Test_pagesClient_Update(t *testing.T) {
 			name: "Update a page properties",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "4ad4d7a9-8b66-4dda-b9a1-2bc98134ee14",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 4ad4d7a9-8b66-4dda-b9a1-2bc98134ee14", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodPatch, request.Method)
 					assert.Equal(t, "/v1/pages/60bdc8bd-3880-44b8-a9cd-8a145b3ffbd7", request.RequestURI)
 					assert.Equal(t, "application/json", request.Header.Get("Content-Type"))
@@ -712,10 +734,12 @@ func Test_pagesClient_Update(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
 			defer mockHTTPServer.Close()
 
-			p := &pagesClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
-			got, err := p.Update(tt.args.ctx, tt.args.params)
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
+
+			got, err := sut.Pages().Update(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return

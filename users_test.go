@@ -14,6 +14,7 @@ func Test_usersClient_Retrieve(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -38,7 +39,12 @@ func Test_usersClient_Retrieve(t *testing.T) {
 			name: "Bot User",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "033dcdcf-8252-49f4-826c-e795fcab0ad2",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 033dcdcf-8252-49f4-826c-e795fcab0ad2", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/users/9a3b5ae0-c6e6-482d-b0e1-ed315ee6dc57", request.RequestURI)
 
@@ -80,7 +86,12 @@ func Test_usersClient_Retrieve(t *testing.T) {
 			name: "Person User",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "033dcdcf-8252-49f4-826c-e795fcab0ad2",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 033dcdcf-8252-49f4-826c-e795fcab0ad2", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/users/d40e767c-d7af-4b18-a86d-55c61f1e39a4", request.RequestURI)
 
@@ -124,12 +135,14 @@ func Test_usersClient_Retrieve(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
+			defer mockHTTPServer.Close()
 
-			sut := &usersClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
 
-			got, err := sut.Retrieve(tt.args.ctx, tt.args.params)
+			got, err := sut.Users().Retrieve(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
@@ -145,6 +158,7 @@ func Test_usersClient_List(t *testing.T) {
 	type fields struct {
 		restClient      rest.Interface
 		mockHTTPHandler http.Handler
+		authToken       string
 	}
 
 	type args struct {
@@ -169,7 +183,12 @@ func Test_usersClient_List(t *testing.T) {
 			name: "List two users in one page",
 			fields: fields{
 				restClient: rest.New(),
+				authToken:  "2a966a7a-6e97-4b2c-abb2-c0eba4dbcb5f",
 				mockHTTPHandler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+					assert.Equal(t, DefaultNotionVersion, request.Header.Get("Notion-Version"))
+					assert.Equal(t, DefaultUserAgent, request.Header.Get("User-Agent"))
+					assert.Equal(t, "Bearer 2a966a7a-6e97-4b2c-abb2-c0eba4dbcb5f", request.Header.Get("Authorization"))
+
 					assert.Equal(t, http.MethodGet, request.Method)
 					assert.Equal(t, "/v1/users?page_size=2", request.RequestURI)
 
@@ -248,12 +267,14 @@ func Test_usersClient_List(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockHTTPServer := httptest.NewServer(tt.fields.mockHTTPHandler)
+			defer mockHTTPServer.Close()
 
-			sut := &usersClient{
-				restClient: tt.fields.restClient.BaseURL(mockHTTPServer.URL),
-			}
+			sut := New(
+				tt.fields.authToken,
+				WithBaseURL(mockHTTPServer.URL),
+			)
 
-			got, err := sut.List(tt.args.ctx, tt.args.params)
+			got, err := sut.Users().List(tt.args.ctx, tt.args.params)
 			if tt.wants.err != nil {
 				assert.ErrorIs(t, err, tt.wants.err)
 				return
