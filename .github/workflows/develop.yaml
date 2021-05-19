@@ -1,0 +1,39 @@
+name: Lint, Test and Build
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.28.3
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+        - 1.16.x
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - uses: actions/checkout@v2.3.3
+
+      - name: Tesing with coverage
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v1
+
+      - name: Build binary
+        run: go build -v

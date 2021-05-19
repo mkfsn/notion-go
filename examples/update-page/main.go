@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	c := notion.New(notion.WithAuthToken(os.Getenv("NOTION_AUTH_TOKEN")))
+	c := notion.New(os.Getenv("NOTION_AUTH_TOKEN"))
 
 	page, err := c.Pages().Update(context.Background(),
 		notion.PagesUpdateParameters{
