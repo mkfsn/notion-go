@@ -3,11 +3,9 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"net/http"
 	"strings"
 	"time"
-
-	"github.com/mkfsn/notion-go/rest"
 )
 
 type Database struct {
@@ -27,26 +25,235 @@ func (d *Database) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Title      []richTextDecoder          `json:"title"`
-		Properties map[string]propertyDecoder `json:"properties"`
+		Title      []json.RawMessage          `json:"title"`
+		Properties map[string]json.RawMessage `json:"properties"`
 	}{
 		Alias: (*Alias)(d),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return fmt.Errorf("failed to unmarshal Database: %w", err)
+		return err
 	}
 
 	d.Title = make([]RichText, 0, len(alias.Title))
-
-	for _, decoder := range alias.Title {
-		d.Title = append(d.Title, decoder.RichText)
-	}
-
 	d.Properties = make(map[string]Property)
 
-	for name, decoder := range alias.Properties {
-		d.Properties[name] = decoder.Property
+	for _, title := range alias.Title {
+		var base BaseRichText
+
+		if err := json.Unmarshal(title, &base); err != nil {
+			return err
+		}
+
+		switch base.Type {
+		case RichTextTypeText:
+			var richText RichTextText
+
+			if err := json.Unmarshal(title, &richText); err != nil {
+				return err
+			}
+
+			d.Title = append(d.Title, richText)
+
+		case RichTextTypeMention:
+			var richText RichTextMention
+
+			if err := json.Unmarshal(title, &richText); err != nil {
+				return err
+			}
+
+			d.Title = append(d.Title, richText)
+
+		case RichTextTypeEquation:
+			var richText RichTextEquation
+
+			if err := json.Unmarshal(title, &richText); err != nil {
+				return err
+			}
+
+			d.Title = append(d.Title, richText)
+		}
+	}
+
+	for name, value := range alias.Properties {
+		var base baseProperty
+
+		if err := json.Unmarshal(value, &base); err != nil {
+			return err
+		}
+
+		switch base.Type {
+		case PropertyTypeTitle:
+			var property TitleProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeRichText:
+			var property RichTextProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeNumber:
+			var property NumberProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeSelect:
+			var property SelectProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeMultiSelect:
+			var property MultiSelectProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeDate:
+			var property DateProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypePeople:
+			var property PeopleProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeFile:
+			var property FileProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeCheckbox:
+			var property CheckboxProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeURL:
+			var property URLProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeEmail:
+			var property EmailProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypePhoneNumber:
+			var property PhoneNumberProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeFormula:
+			var property FormulaProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeRelation:
+			var property RelationProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeRollup:
+			var property RollupProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeCreatedTime:
+			var property CreatedTimeProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeCreatedBy:
+			var property CreatedByProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeLastEditedTime:
+			var property LastEditedTimeProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+
+		case PropertyTypeLastEditedBy:
+			var property LastEditedByProperty
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			d.Properties[name] = property
+		}
 	}
 
 	return nil
@@ -71,13 +278,60 @@ type RichText interface {
 	isRichText()
 }
 
+func newRichText(data []byte) (RichText, error) {
+	var base BaseRichText
+
+	if err := json.Unmarshal(data, &base); err != nil {
+		return nil, err
+	}
+
+	switch base.Type {
+	case RichTextTypeText:
+		var richText RichTextText
+
+		if err := json.Unmarshal(data, &richText); err != nil {
+			return nil, err
+		}
+
+		return richText, nil
+
+	case RichTextTypeMention:
+		var richText RichTextMention
+
+		if err := json.Unmarshal(data, &richText); err != nil {
+			return nil, err
+		}
+
+		return richText, nil
+
+	case RichTextTypeEquation:
+		var richText RichTextEquation
+
+		if err := json.Unmarshal(data, &richText); err != nil {
+			return nil, err
+		}
+
+		return richText, nil
+	}
+
+	return nil, ErrUnknown
+}
+
+type RichTextType string
+
+const (
+	RichTextTypeText     RichTextType = "text"
+	RichTextTypeMention  RichTextType = "mention"
+	RichTextTypeEquation RichTextType = "equation"
+)
+
 type BaseRichText struct {
 	// The plain text without annotations.
 	PlainText string `json:"plain_text,omitempty"`
 	// (Optional) The URL of any link or internal Notion mention in this text, if any.
 	Href string `json:"href,omitempty"`
 	// Type of this rich text object.
-	Type RichTextType `json:"type,omitempty"`
+	Type RichTextType `json:"type"`
 	// All annotations that apply to this rich text.
 	// Annotations include colors and bold/italics/underline/strikethrough.
 	Annotations *Annotations `json:"annotations,omitempty"`
@@ -86,8 +340,7 @@ type BaseRichText struct {
 func (r BaseRichText) isRichText() {}
 
 type Link struct {
-	// TODO: What is this? Is this still in used?
-	Type string `json:"type,omitempty"`
+	Type string `json:"type"`
 	URL  string `json:"url"`
 }
 
@@ -153,6 +406,30 @@ type Property interface {
 	isProperty()
 }
 
+type PropertyType string
+
+const (
+	PropertyTypeTitle          PropertyType = "title"
+	PropertyTypeRichText       PropertyType = "rich_text"
+	PropertyTypeNumber         PropertyType = "number"
+	PropertyTypeSelect         PropertyType = "select"
+	PropertyTypeMultiSelect    PropertyType = "multi_select"
+	PropertyTypeDate           PropertyType = "date"
+	PropertyTypePeople         PropertyType = "people"
+	PropertyTypeFile           PropertyType = "file"
+	PropertyTypeCheckbox       PropertyType = "checkbox"
+	PropertyTypeURL            PropertyType = "url"
+	PropertyTypeEmail          PropertyType = "email"
+	PropertyTypePhoneNumber    PropertyType = "phone_number"
+	PropertyTypeFormula        PropertyType = "formula"
+	PropertyTypeRelation       PropertyType = "relation"
+	PropertyTypeRollup         PropertyType = "rollup"
+	PropertyTypeCreatedTime    PropertyType = "created_time"
+	PropertyTypeCreatedBy      PropertyType = "created_by"
+	PropertyTypeLastEditedTime PropertyType = "last_edited_time"
+	PropertyTypeLastEditedBy   PropertyType = "last_edited_by"
+)
+
 type baseProperty struct {
 	// The ID of the property, usually a short string of random letters and symbols.
 	// Some automatically generated property types have special human-readable IDs.
@@ -174,43 +451,54 @@ type RichTextProperty struct {
 	RichText interface{} `json:"rich_text"`
 }
 
-type NumberPropertyOption struct {
-	Format NumberFormat `json:"format"`
-}
+type NumberFormat string
+
+const (
+	NumberFormatNumber           NumberFormat = "number"
+	NumberFormatNumberWithCommas NumberFormat = "number_with_commas"
+	NumberFormatPercent          NumberFormat = "percent"
+	NumberFormatDollar           NumberFormat = "dollar"
+	NumberFormatEuro             NumberFormat = "euro"
+	NumberFormatPound            NumberFormat = "pound"
+	NumberFormatYen              NumberFormat = "yen"
+	NumberFormatRuble            NumberFormat = "ruble"
+	NumberFormatRupee            NumberFormat = "rupee"
+	NumberFormatWon              NumberFormat = "won"
+	NumberFormatYuan             NumberFormat = "yuan"
+)
 
 type NumberProperty struct {
 	baseProperty
-	Number NumberPropertyOption `json:"number"`
+	Number struct {
+		Format NumberFormat `json:"format"`
+	} `json:"number"`
 }
 
 type SelectOption struct {
-	ID    string `json:"id"`
 	Name  string `json:"name"`
+	ID    string `json:"id"`
 	Color Color  `json:"color"`
 }
 
 type MultiSelectOption struct {
-	ID    string `json:"id"`
 	Name  string `json:"name"`
+	ID    string `json:"id"`
 	Color Color  `json:"color"`
-}
-
-type SelectPropertyOption struct {
-	Options []SelectOption `json:"options"`
 }
 
 type SelectProperty struct {
 	baseProperty
-	Select SelectPropertyOption `json:"select"`
-}
 
-type MultiSelectPropertyOption struct {
-	Options []MultiSelectOption `json:"options"`
+	Select struct {
+		Options []SelectOption `json:"options"`
+	} `json:"select"`
 }
 
 type MultiSelectProperty struct {
 	baseProperty
-	MultiSelect MultiSelectPropertyOption `json:"multi_select"`
+	MultiSelect struct {
+		Options []MultiSelectOption `json:"options"`
+	} `json:"multi_select"`
 }
 
 type DateProperty struct {
@@ -248,37 +536,49 @@ type PhoneNumberProperty struct {
 	PhoneNumber interface{} `json:"phone_number"`
 }
 
-type Formula struct {
-	Expression string `json:"expression"`
-}
-
 type FormulaProperty struct {
 	baseProperty
-	Formula Formula `json:"formula"`
-}
-
-type Relation struct {
-	DatabaseID         string  `json:"database_id"`
-	SyncedPropertyName *string `json:"synced_property_name"`
-	SyncedPropertyID   *string `json:"synced_property_id"`
+	Formula struct {
+		Expression string `json:"expression"`
+	} `json:"formula"`
 }
 
 type RelationProperty struct {
 	baseProperty
-	Relation Relation `json:"relation"`
+	Relation struct {
+		DatabaseID         string  `json:"database_id"`
+		SyncedPropertyName *string `json:"synced_property_name"`
+		SyncedPropertyID   *string `json:"synced_property_id"`
+	} `json:"relation"`
 }
 
-type RollupPropertyOption struct {
-	RelationPropertyName string         `json:"relation_property_name"`
-	RelationPropertyID   string         `json:"relation_property_id"`
-	RollupPropertyName   string         `json:"rollup_property_name"`
-	RollupPropertyID     string         `json:"rollup_property_id"`
-	Function             RollupFunction `json:"function"`
-}
+type RollupFunction string
+
+const (
+	RollupFunctionCountAll          RollupFunction = "count_all"
+	RollupFunctionCountValues       RollupFunction = "count_values"
+	RollupFunctionCountUniqueValues RollupFunction = "count_unique_values"
+	RollupFunctionCountEmpty        RollupFunction = "count_empty"
+	RollupFunctionCountNotEmpty     RollupFunction = "count_not_empty"
+	RollupFunctionPercentEmpty      RollupFunction = "percent_empty"
+	RollupFunctionPercentNotEmpty   RollupFunction = "percent_not_empty"
+	RollupFunctionSum               RollupFunction = "sum"
+	RollupFunctionAverage           RollupFunction = "average"
+	RollupFunctionMedian            RollupFunction = "median"
+	RollupFunctionMin               RollupFunction = "min"
+	RollupFunctionMax               RollupFunction = "max"
+	RollupFunctionRange             RollupFunction = "range"
+)
 
 type RollupProperty struct {
 	baseProperty
-	Rollup RollupPropertyOption `json:"rollup"`
+	Rollup struct {
+		RelationPropertyName string         `json:"relation_property_name"`
+		RelationPropertyID   string         `json:"relation_property_id"`
+		RollupPropertyName   string         `json:"rollup_property_name"`
+		RollupPropertyID     string         `json:"rollup_property_id"`
+		Function             RollupFunction `json:"function"`
+	} `json:"rollup"`
 }
 
 type CreatedTimeProperty struct {
@@ -302,7 +602,7 @@ type LastEditedByProperty struct {
 }
 
 type DatabasesRetrieveParameters struct {
-	DatabaseID string `json:"-" url:"-"`
+	DatabaseID string `json:"-"`
 }
 
 type DatabasesRetrieveResponse struct {
@@ -317,6 +617,20 @@ type DatabasesListResponse struct {
 	PaginatedList
 	Results []Database `json:"results"`
 }
+
+type SortTimestamp string
+
+const (
+	SortTimestampByCreatedTime    SortTimestamp = "created_time"
+	SortTimestampByLastEditedTime SortTimestamp = "last_edited_time"
+)
+
+type SortDirection string
+
+const (
+	SortDirectionAscending  SortDirection = "ascending"
+	SortDirectionDescending SortDirection = "descending"
+)
 
 type Sort struct {
 	Property  string        `json:"property,omitempty"`
@@ -362,19 +676,19 @@ type NumberFilter struct {
 	LessThan             *float64 `json:"less_than,omitempty"`
 	GreaterThanOrEqualTo *float64 `json:"greater_than_or_equal_to,omitempty"`
 	LessThanOrEqualTo    *float64 `json:"less_than_or_equal_to,omitempty"`
-	IsEmpty              bool     `json:"is_empty,omitempty"`
-	IsNotEmpty           bool     `json:"is_not_empty,omitempty"`
+	IsEmpty              *bool    `json:"is_empty,omitempty"`
+	IsNotEmpty           *bool    `json:"is_not_empty,omitempty"`
 }
 
-// SingleNumberFilter is a number filter condition applies to database properties of type "number".
+// SingleNumberFilter is a number filter condition applies to database properties of type "number"
 type SingleNumberFilter struct {
 	SinglePropertyFilter
 	Number NumberFilter `json:"number"`
 }
 
 type CheckboxFilter struct {
-	Equals       bool `json:"equals,omitempty"`
-	DoesNotEqual bool `json:"does_not_equal,omitempty"`
+	Equals       *bool `json:"equals,omitempty"`
+	DoesNotEqual *bool `json:"does_not_equal,omitempty"`
 }
 
 // SingleCheckboxFilter is a checkbox filter condition applies to database properties of type "checkbox".
@@ -386,8 +700,8 @@ type SingleCheckboxFilter struct {
 type SelectFilter struct {
 	Equals       *string `json:"equals,omitempty"`
 	DoesNotEqual *string `json:"does_not_equal,omitempty"`
-	IsEmpty      bool    `json:"is_empty,omitempty"`
-	IsNotEmpty   bool    `json:"is_not_empty,omitempty"`
+	IsEmpty      *bool   `json:"is_empty,omitempty"`
+	IsNotEmpty   *bool   `json:"is_not_empty,omitempty"`
 }
 
 // SingleSelectFilter is a select filter condition applies to database properties of type "select".
@@ -399,8 +713,8 @@ type SingleSelectFilter struct {
 type MultiSelectFilter struct {
 	Contains       *string `json:"contains,omitempty"`
 	DoesNotContain *string `json:"does_not_contain,omitempty"`
-	IsEmpty        bool    `json:"is_empty,omitempty"`
-	IsNotEmpty     bool    `json:"is_not_empty,omitempty"`
+	IsEmpty        *bool   `json:"is_empty,omitempty"`
+	IsNotEmpty     *bool   `json:"is_not_empty,omitempty"`
 }
 
 // SingleMultiSelectFilter is a multi-select filter condition applies to database properties of type "multi_select".
@@ -414,8 +728,8 @@ type DateFilter struct {
 	Before     *string                `json:"before,omitempty"`
 	After      *string                `json:"after,omitempty"`
 	OnOrBefore *string                `json:"on_or_before,omitempty"`
-	IsEmpty    bool                   `json:"is_empty,omitempty"`
-	IsNotEmpty bool                   `json:"is_not_empty,omitempty"`
+	IsEmpty    *bool                  `json:"is_empty,omitempty"`
+	IsNotEmpty *bool                  `json:"is_not_empty,omitempty"`
 	OnOrAfter  *string                `json:"on_or_after,omitempty"`
 	PastWeek   map[string]interface{} `json:"past_week,omitempty"`
 	PastMonth  map[string]interface{} `json:"past_month,omitempty"`
@@ -436,8 +750,8 @@ type SingleDateFilter struct {
 type PeopleFilter struct {
 	Contains       *string `json:"contains,omitempty"`
 	DoesNotContain *string `json:"does_not_contain,omitempty"`
-	IsEmpty        bool    `json:"is_empty,omitempty"`
-	IsNotEmpty     bool    `json:"is_not_empty,omitempty"`
+	IsEmpty        *bool   `json:"is_empty,omitempty"`
+	IsNotEmpty     *bool   `json:"is_not_empty,omitempty"`
 }
 
 // SinglePeopleFilter is a people filter condition applies to database properties of types "people", "created_by", and "last_edited_by".
@@ -449,8 +763,8 @@ type SinglePeopleFilter struct {
 }
 
 type FilesFilter struct {
-	IsEmpty    bool `json:"is_empty,omitempty"`
-	IsNotEmpty bool `json:"is_not_empty,omitempty"`
+	IsEmpty    *bool `json:"is_empty,omitempty"`
+	IsNotEmpty *bool `json:"is_not_empty,omitempty"`
 }
 
 // SingleFilesFilter is a files filter condition applies to database properties of type "files".
@@ -462,8 +776,8 @@ type SingleFilesFilter struct {
 type RelationFilter struct {
 	Contains       *string `json:"contains,omitempty"`
 	DoesNotContain *string `json:"does_not_contain,omitempty"`
-	IsEmpty        bool    `json:"is_empty,omitempty"`
-	IsNotEmpty     bool    `json:"is_not_empty,omitempty"`
+	IsEmpty        *bool   `json:"is_empty,omitempty"`
+	IsNotEmpty     *bool   `json:"is_not_empty,omitempty"`
 }
 
 // SingleRelationFilter is a relation filter condition applies to database properties of type "relation".
@@ -495,13 +809,13 @@ func (c CompoundFilter) isFilter() {}
 type DatabasesQueryParameters struct {
 	PaginationParameters
 	// Identifier for a Notion database.
-	DatabaseID string `json:"-" url:"-"`
+	DatabaseID string `json:"-"`
 	// When supplied, limits which pages are returned based on the
-	// [filter conditions](https://developers.com/reference-link/post-database-query-filter).
-	Filter Filter `json:"filter,omitempty" url:"-"`
+	// [filter conditions](https://developers.notion.com/reference-link/post-database-query-filter).
+	Filter Filter `json:"filter,omitempty"`
 	// When supplied, orders the results based on the provided
-	// [sort criteria](https://developers.com/reference-link/post-database-query-sort).
-	Sorts []Sort `json:"sorts,omitempty" url:"-"`
+	// [sort criteria](https://developers.notion.com/reference-link/post-database-query-sort).
+	Sorts []Sort `json:"sorts,omitempty"`
 }
 
 type DatabasesQueryResponse struct {
@@ -516,154 +830,60 @@ type DatabasesInterface interface {
 }
 
 type databasesClient struct {
-	restClient rest.Interface
+	client client
 }
 
-func newDatabasesClient(restClient rest.Interface) *databasesClient {
+func newDatabasesClient(client client) *databasesClient {
 	return &databasesClient{
-		restClient: restClient,
+		client: client,
 	}
 }
 
 func (d *databasesClient) Retrieve(ctx context.Context, params DatabasesRetrieveParameters) (*DatabasesRetrieveResponse, error) {
-	var result DatabasesRetrieveResponse
+	endpoint := strings.Replace(APIDatabasesRetrieveEndpoint, "{database_id}", params.DatabaseID, 1)
 
-	var failure HTTPError
+	b, err := d.client.Request(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	err := d.restClient.New().Get().
-		Endpoint(strings.Replace(APIDatabasesRetrieveEndpoint, "{database_id}", params.DatabaseID, 1)).
-		Receive(ctx, &result, &failure)
+	var response DatabasesRetrieveResponse
 
-	return &result, err // nolint:wrapcheck
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (d *databasesClient) List(ctx context.Context, params DatabasesListParameters) (*DatabasesListResponse, error) {
-	var result DatabasesListResponse
+	b, err := d.client.Request(ctx, http.MethodGet, APIDatabasesListEndpoint, params)
+	if err != nil {
+		return nil, err
+	}
 
-	var failure HTTPError
+	var response DatabasesListResponse
 
-	err := d.restClient.New().Get().
-		Endpoint(APIDatabasesListEndpoint).
-		QueryStruct(params).
-		Receive(ctx, &result, &failure)
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
 
-	return &result, err // nolint:wrapcheck
+	return &response, nil
 }
 
 func (d *databasesClient) Query(ctx context.Context, params DatabasesQueryParameters) (*DatabasesQueryResponse, error) {
-	var result DatabasesQueryResponse
+	endpoint := strings.Replace(APIDatabasesQueryEndpoint, "{database_id}", params.DatabaseID, 1)
 
-	var failure HTTPError
-
-	err := d.restClient.New().Post().
-		Endpoint(strings.Replace(APIDatabasesQueryEndpoint, "{database_id}", params.DatabaseID, 1)).
-		QueryStruct(params).
-		BodyJSON(params).
-		Receive(ctx, &result, &failure)
-
-	return &result, err // nolint:wrapcheck
-}
-
-type richTextDecoder struct {
-	RichText
-}
-
-func (r *richTextDecoder) UnmarshalJSON(data []byte) error {
-	var decoder struct {
-		Type RichTextType `json:"type"`
+	b, err := d.client.Request(ctx, http.MethodPost, endpoint, params)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal RichText: %w", err)
+	var response DatabasesQueryResponse
+
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
 	}
 
-	switch decoder.Type {
-	case RichTextTypeText:
-		r.RichText = &RichTextText{}
-
-	case RichTextTypeMention:
-		r.RichText = &RichTextMention{}
-
-	case RichTextTypeEquation:
-		r.RichText = &RichTextEquation{}
-	}
-
-	return json.Unmarshal(data, &r.RichText)
-}
-
-type propertyDecoder struct {
-	Property
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-// nolint: cyclop
-func (p *propertyDecoder) UnmarshalJSON(data []byte) error {
-	var decoder struct {
-		Type PropertyType `json:"type"`
-	}
-
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal Property: %w", err)
-	}
-
-	switch decoder.Type {
-	case PropertyTypeTitle:
-		p.Property = &TitleProperty{}
-
-	case PropertyTypeRichText:
-		p.Property = &RichTextProperty{}
-
-	case PropertyTypeNumber:
-		p.Property = &NumberProperty{}
-
-	case PropertyTypeSelect:
-		p.Property = &SelectProperty{}
-
-	case PropertyTypeMultiSelect:
-		p.Property = &MultiSelectProperty{}
-
-	case PropertyTypeDate:
-		p.Property = &DateProperty{}
-
-	case PropertyTypePeople:
-		p.Property = &PeopleProperty{}
-
-	case PropertyTypeFile:
-		p.Property = &FileProperty{}
-
-	case PropertyTypeCheckbox:
-		p.Property = &CheckboxProperty{}
-
-	case PropertyTypeURL:
-		p.Property = &URLProperty{}
-
-	case PropertyTypeEmail:
-		p.Property = &EmailProperty{}
-
-	case PropertyTypePhoneNumber:
-		p.Property = &PhoneNumberProperty{}
-
-	case PropertyTypeFormula:
-		p.Property = &FormulaProperty{}
-
-	case PropertyTypeRelation:
-		p.Property = &RelationProperty{}
-
-	case PropertyTypeRollup:
-		p.Property = &RollupProperty{}
-
-	case PropertyTypeCreatedTime:
-		p.Property = &CreatedTimeProperty{}
-
-	case PropertyTypeCreatedBy:
-		p.Property = &CreatedByProperty{}
-
-	case PropertyTypeLastEditedTime:
-		p.Property = &LastEditedTimeProperty{}
-
-	case PropertyTypeLastEditedBy:
-		p.Property = &LastEditedByProperty{}
-	}
-
-	return json.Unmarshal(data, &p.Property)
+	return &response, nil
 }

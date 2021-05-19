@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	c := notion.New(os.Getenv("NOTION_AUTH_TOKEN"))
+	c := notion.New(notion.WithAuthToken(os.Getenv("NOTION_AUTH_TOKEN")))
 
 	resp, err := c.Users().List(context.Background(), notion.UsersListParameters{
 		PaginationParameters: notion.PaginationParameters{
 			StartCursor: "",
-			PageSize:    10,
+			PageSize:    1,
 		},
 	})
 

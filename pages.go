@@ -3,16 +3,22 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"net/http"
 	"strings"
 	"time"
-
-	"github.com/mkfsn/notion-go/rest"
 )
 
 type Parent interface {
 	isParent()
 }
+
+type ParentType string
+
+const (
+	ParentTypeDatabase  ParentType = "database_id"
+	ParentTypePage      ParentType = "page"
+	ParentTypeWorkspace ParentType = "workspace"
+)
 
 type baseParent struct {
 	Type ParentType `json:"type"`
@@ -74,22 +80,223 @@ func (p *Page) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Parent     parentDecoder                   `json:"parent"`
-		Properties map[string]propertyValueDecoder `json:"properties"`
+		Parent     json.RawMessage            `json:"parent"`
+		Properties map[string]json.RawMessage `json:"properties"`
 	}{
 		Alias: (*Alias)(p),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return fmt.Errorf("failed to unmarshal Page: %w", err)
+		return err
 	}
 
-	p.Parent = alias.Parent.Parent
+	var baseParent baseParent
+
+	if err := json.Unmarshal(alias.Parent, &baseParent); err != nil {
+		return err
+	}
+
+	switch baseParent.Type {
+	case ParentTypeDatabase:
+		var parent DatabaseParent
+
+		if err := json.Unmarshal(alias.Parent, &parent); err != nil {
+			return err
+		}
+
+		p.Parent = parent
+
+	case ParentTypePage:
+		var parent PageParent
+
+		if err := json.Unmarshal(alias.Parent, &parent); err != nil {
+			return err
+		}
+
+		p.Parent = parent
+
+	case ParentTypeWorkspace:
+		var parent WorkspaceParent
+
+		if err := json.Unmarshal(alias.Parent, &parent); err != nil {
+			return err
+		}
+
+		p.Parent = parent
+	}
 
 	p.Properties = make(map[string]PropertyValue)
 
-	for name, decoder := range alias.Properties {
-		p.Properties[name] = decoder.PropertyValue
+	for name, value := range alias.Properties {
+		var base basePropertyValue
+
+		if err := json.Unmarshal(value, &base); err != nil {
+			return err
+		}
+
+		switch base.Type {
+		case PropertyValueTypeRichText:
+			var property RichTextPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeNumber:
+			var property NumberPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeSelect:
+			var property SelectPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeMultiSelect:
+			var property MultiSelectPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeDate:
+			var property DatePropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeFormula:
+			var property FormulaPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeRollup:
+			var property RollupPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeTitle:
+			var property TitlePropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypePeople:
+			var property PeoplePropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeFiles:
+			var property FilesPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeCheckbox:
+			var property CheckboxPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeURL:
+			var property URLPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeEmail:
+			var property EmailPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypePhoneNumber:
+			var property PhoneNumberPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeCreatedTime:
+			var property CreatedTimePropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeCreatedBy:
+			var property CreatedByPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeLastEditedTime:
+			var property LastEditedTimePropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+
+		case PropertyValueTypeLastEditedBy:
+			var property LastEditedByPropertyValue
+
+			if err := json.Unmarshal(value, &property); err != nil {
+				return err
+			}
+
+			p.Properties[name] = property
+		}
 	}
 
 	return nil
@@ -100,6 +307,29 @@ func (p Page) isSearchable() {}
 type PropertyValue interface {
 	isPropertyValue()
 }
+
+type PropertyValueType string
+
+const (
+	PropertyValueTypeRichText       PropertyValueType = "rich_text"
+	PropertyValueTypeNumber         PropertyValueType = "number"
+	PropertyValueTypeSelect         PropertyValueType = "select"
+	PropertyValueTypeMultiSelect    PropertyValueType = "multi_select"
+	PropertyValueTypeDate           PropertyValueType = "date"
+	PropertyValueTypeFormula        PropertyValueType = "formula"
+	PropertyValueTypeRollup         PropertyValueType = "rollup"
+	PropertyValueTypeTitle          PropertyValueType = "title"
+	PropertyValueTypePeople         PropertyValueType = "people"
+	PropertyValueTypeFiles          PropertyValueType = "files"
+	PropertyValueTypeCheckbox       PropertyValueType = "checkbox"
+	PropertyValueTypeURL            PropertyValueType = "url"
+	PropertyValueTypeEmail          PropertyValueType = "email"
+	PropertyValueTypePhoneNumber    PropertyValueType = "phone_number"
+	PropertyValueTypeCreatedTime    PropertyValueType = "created_time"
+	PropertyValueTypeCreatedBy      PropertyValueType = "created_by"
+	PropertyValueTypeLastEditedTime PropertyValueType = "last_edited_time"
+	PropertyValueTypeLastEditedBy   PropertyValueType = "last_edited_by"
+)
 
 type basePropertyValue struct {
 	// Underlying identifier for the property. This identifier is guaranteed to remain constant when the property name changes.
@@ -122,19 +352,23 @@ func (t *TitlePropertyValue) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Title []richTextDecoder `json:"title"`
+		Title []json.RawMessage `json:"title"`
 	}{
 		Alias: (*Alias)(t),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return fmt.Errorf("failed to unmarshal TitlePropertyValue: %w", err)
+		return err
 	}
 
 	t.Title = make([]RichText, 0, len(alias.Title))
 
-	for _, decoder := range alias.Title {
-		t.Title = append(t.Title, decoder.RichText)
+	for _, value := range alias.Title {
+		richText, err := newRichText(value)
+		if err != nil {
+			return err
+		}
+		t.Title = append(t.Title, richText)
 	}
 
 	return nil
@@ -150,19 +384,23 @@ func (r *RichTextPropertyValue) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		RichText []richTextDecoder `json:"rich_text"`
+		RichText []json.RawMessage `json:"rich_text"`
 	}{
 		Alias: (*Alias)(r),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return fmt.Errorf("failed to unmarshal RichTextPropertyValue: %w", err)
+		return err
 	}
 
 	r.RichText = make([]RichText, 0, len(alias.RichText))
 
-	for _, decoder := range alias.RichText {
-		r.RichText = append(r.RichText, decoder.RichText)
+	for _, value := range alias.RichText {
+		richText, err := newRichText(value)
+		if err != nil {
+			return err
+		}
+		r.RichText = append(r.RichText, richText)
 	}
 
 	return nil
@@ -195,19 +433,74 @@ type MultiSelectPropertyValue struct {
 	MultiSelect []MultiSelectPropertyValueOption `json:"multi_select"`
 }
 
-type Date struct {
-	Start string  `json:"start"`
-	End   *string `json:"end"`
-}
-
 type DatePropertyValue struct {
 	basePropertyValue
-	Date Date `json:"date"`
+	Date struct {
+		Start string  `json:"start"`
+		End   *string `json:"end"`
+	} `json:"date"`
 }
 
 type FormulaValue interface {
 	isFormulaValue()
 }
+
+func newFormulaValueType(data []byte) (FormulaValue, error) {
+	var base baseFormulaValue
+
+	if err := json.Unmarshal(data, &base); err != nil {
+		return nil, err
+	}
+
+	switch base.Type {
+	case FormulaValueTypeString:
+		var formulaValue StringFormulaValue
+
+		if err := json.Unmarshal(data, &formulaValue); err != nil {
+			return nil, err
+		}
+
+		return formulaValue, nil
+
+	case FormulaValueTypeNumber:
+		var formulaValue NumberFormulaValue
+
+		if err := json.Unmarshal(data, &formulaValue); err != nil {
+			return nil, err
+		}
+
+		return formulaValue, nil
+
+	case FormulaValueTypeBoolean:
+		var formulaValue BooleanFormulaValue
+
+		if err := json.Unmarshal(data, &formulaValue); err != nil {
+			return nil, err
+		}
+
+		return formulaValue, nil
+
+	case FormulaValueTypeDate:
+		var formulaValue DateFormulaValue
+
+		if err := json.Unmarshal(data, &formulaValue); err != nil {
+			return nil, err
+		}
+
+		return formulaValue, nil
+	}
+
+	return nil, ErrUnknown
+}
+
+type FormulaValueType string
+
+const (
+	FormulaValueTypeString  FormulaValueType = "string"
+	FormulaValueTypeNumber  FormulaValueType = "number"
+	FormulaValueTypeBoolean FormulaValueType = "boolean"
+	FormulaValueTypeDate    FormulaValueType = "date"
+)
 
 type baseFormulaValue struct {
 	Type FormulaValueType `json:"type"`
@@ -245,27 +538,23 @@ func (f *FormulaPropertyValue) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Formula formulaValueDecoder `json:"formula"`
+		Formula json.RawMessage `json:"formula"`
 	}{
 		Alias: (*Alias)(f),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return fmt.Errorf("failed to unmarshal FormulaPropertyValue: %w", err)
+		return err
 	}
 
-	f.Formula = alias.Formula.FormulaValue
+	formula, err := newFormulaValueType(alias.Formula)
+	if err != nil {
+		return err
+	}
+
+	f.Formula = formula
 
 	return nil
-}
-
-type PageReference struct {
-	ID string `json:"id"`
-}
-
-type RelationPropertyValue struct {
-	basePropertyValue
-	Relation []PageReference `json:"relation"`
 }
 
 type RollupValueType interface {
@@ -303,13 +592,11 @@ type PeoplePropertyValue struct {
 	People []User `json:"people"`
 }
 
-type File struct {
-	Name string `json:"name"`
-}
-
 type FilesPropertyValue struct {
 	basePropertyValue
-	Files []File `json:"files"`
+	Files []struct {
+		Name string `json:"name"`
+	} `json:"files"`
 }
 
 type CheckboxPropertyValue struct {
@@ -353,7 +640,7 @@ type LastEditedByPropertyValue struct {
 }
 
 type PagesRetrieveParameters struct {
-	PageID string `json:"-" url:"-"`
+	PageID string
 }
 
 type PagesRetrieveResponse struct {
@@ -389,185 +676,60 @@ type PagesInterface interface {
 }
 
 type pagesClient struct {
-	restClient rest.Interface
+	client client
 }
 
-func newPagesClient(restClient rest.Interface) *pagesClient {
+func newPagesClient(client client) *pagesClient {
 	return &pagesClient{
-		restClient: restClient,
+		client: client,
 	}
 }
 
 func (p *pagesClient) Retrieve(ctx context.Context, params PagesRetrieveParameters) (*PagesRetrieveResponse, error) {
-	var result PagesRetrieveResponse
+	endpoint := strings.Replace(APIPagesRetrieveEndpoint, "{page_id}", params.PageID, 1)
 
-	var failure HTTPError
+	b, err := p.client.Request(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	err := p.restClient.New().Get().
-		Endpoint(strings.Replace(APIPagesRetrieveEndpoint, "{page_id}", params.PageID, 1)).
-		Receive(ctx, &result, &failure)
+	var response PagesRetrieveResponse
 
-	return &result, err // nolint:wrapcheck
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (p *pagesClient) Update(ctx context.Context, params PagesUpdateParameters) (*PagesUpdateResponse, error) {
-	var result PagesUpdateResponse
+	endpoint := strings.Replace(APIPagesUpdateEndpoint, "{page_id}", params.PageID, 1)
 
-	var failure HTTPError
+	b, err := p.client.Request(ctx, http.MethodPatch, endpoint, params)
+	if err != nil {
+		return nil, err
+	}
 
-	err := p.restClient.New().Patch().
-		Endpoint(strings.Replace(APIPagesUpdateEndpoint, "{page_id}", params.PageID, 1)).
-		QueryStruct(params).
-		BodyJSON(params).
-		Receive(ctx, &result, &failure)
+	var response PagesUpdateResponse
 
-	return &result, err // nolint:wrapcheck
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (p *pagesClient) Create(ctx context.Context, params PagesCreateParameters) (*PagesCreateResponse, error) {
-	var result PagesCreateResponse
-
-	var failure HTTPError
-
-	err := p.restClient.New().Post().
-		Endpoint(APIPagesCreateEndpoint).
-		QueryStruct(params).
-		BodyJSON(params).
-		Receive(ctx, &result, &failure)
-
-	return &result, err // nolint:wrapcheck
-}
-
-type formulaValueDecoder struct {
-	FormulaValue
-}
-
-func (f *formulaValueDecoder) UnmarshalJSON(data []byte) error {
-	var decoder struct {
-		Type FormulaValueType `json:"type"`
+	b, err := p.client.Request(ctx, http.MethodPost, APIPagesCreateEndpoint, params)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal FormulaValue: %w", err)
+	var response PagesCreateResponse
+
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
 	}
 
-	switch decoder.Type {
-	case FormulaValueTypeString:
-		f.FormulaValue = &StringFormulaValue{}
-
-	case FormulaValueTypeNumber:
-		f.FormulaValue = &NumberFormulaValue{}
-
-	case FormulaValueTypeBoolean:
-		f.FormulaValue = &BooleanFormulaValue{}
-
-	case FormulaValueTypeDate:
-		f.FormulaValue = &DateFormulaValue{}
-	}
-
-	return json.Unmarshal(data, &f.FormulaValue)
-}
-
-type parentDecoder struct {
-	Parent
-}
-
-func (p *parentDecoder) UnmarshalJSON(data []byte) error {
-	var decoder struct {
-		Type ParentType `json:"type"`
-	}
-
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal Parent: %w", err)
-	}
-
-	switch decoder.Type {
-	case ParentTypeDatabase:
-		p.Parent = &DatabaseParent{}
-
-	case ParentTypePage:
-		p.Parent = &PageParent{}
-
-	case ParentTypeWorkspace:
-		p.Parent = &WorkspaceParent{}
-	}
-
-	return json.Unmarshal(data, p.Parent)
-}
-
-type propertyValueDecoder struct {
-	PropertyValue
-}
-
-// UnmarshalJSON implements json.Unmarshaler
-// nolint: cyclop
-func (p *propertyValueDecoder) UnmarshalJSON(data []byte) error {
-	var decoder struct {
-		Type PropertyValueType `json:"type,omitempty"`
-	}
-
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal PropertyValue: %w", err)
-	}
-
-	switch decoder.Type {
-	case PropertyValueTypeRichText:
-		p.PropertyValue = &RichTextPropertyValue{}
-
-	case PropertyValueTypeNumber:
-		p.PropertyValue = &NumberPropertyValue{}
-
-	case PropertyValueTypeSelect:
-		p.PropertyValue = &SelectPropertyValue{}
-
-	case PropertyValueTypeMultiSelect:
-		p.PropertyValue = &MultiSelectPropertyValue{}
-
-	case PropertyValueTypeDate:
-		p.PropertyValue = &DatePropertyValue{}
-
-	case PropertyValueTypeFormula:
-		p.PropertyValue = &FormulaPropertyValue{}
-
-	case PropertyValueTypeRelation:
-		p.PropertyValue = &RelationPropertyValue{}
-
-	case PropertyValueTypeRollup:
-		p.PropertyValue = &RollupPropertyValue{}
-
-	case PropertyValueTypeTitle:
-		p.PropertyValue = &TitlePropertyValue{}
-
-	case PropertyValueTypePeople:
-		p.PropertyValue = &PeoplePropertyValue{}
-
-	case PropertyValueTypeFiles:
-		p.PropertyValue = &FilesPropertyValue{}
-
-	case PropertyValueTypeCheckbox:
-		p.PropertyValue = &CheckboxPropertyValue{}
-
-	case PropertyValueTypeURL:
-		p.PropertyValue = &URLPropertyValue{}
-
-	case PropertyValueTypeEmail:
-		p.PropertyValue = &EmailPropertyValue{}
-
-	case PropertyValueTypePhoneNumber:
-		p.PropertyValue = &PhoneNumberPropertyValue{}
-
-	case PropertyValueTypeCreatedTime:
-		p.PropertyValue = &CreatedTimePropertyValue{}
-
-	case PropertyValueTypeCreatedBy:
-		p.PropertyValue = &CreatedByPropertyValue{}
-
-	case PropertyValueTypeLastEditedTime:
-		p.PropertyValue = &LastEditedTimePropertyValue{}
-
-	case PropertyValueTypeLastEditedBy:
-		p.PropertyValue = &LastEditedByPropertyValue{}
-	}
-
-	return json.Unmarshal(data, p.PropertyValue)
+	return &response, nil
 }

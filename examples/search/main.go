@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	c := notion.New(os.Getenv("NOTION_AUTH_TOKEN"))
+	c := notion.New(notion.WithAuthToken(os.Getenv("NOTION_AUTH_TOKEN")))
 
 	resp, err := c.Search(context.Background(), notion.SearchParameters{
 		Query: "フィリスのアトリエ",
@@ -26,7 +26,5 @@ func main() {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	for _, object := range resp.Results {
-		log.Printf("object: %#v\n", object)
-	}
+	log.Printf("response: %#v\n", resp)
 }

@@ -3,10 +3,15 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"net/http"
 	"strings"
+)
 
-	"github.com/mkfsn/notion-go/rest"
+type UserType = string
+
+const (
+	UserTypePerson UserType = "person"
+	UserTypeBot    UserType = "bot"
 )
 
 type User interface {
@@ -14,47 +19,61 @@ type User interface {
 }
 
 type baseUser struct {
-	Object    ObjectType `json:"object"`
-	ID        string     `json:"id"`
-	Type      UserType   `json:"type"`
-	Name      string     `json:"name"`
-	AvatarURL string     `json:"avatar_url"`
+	Object    string   `json:"object"`
+	ID        string   `json:"id"`
+	Type      UserType `json:"type"`
+	Name      string   `json:"name"`
+	AvatarURL string   `json:"avatar_url"`
 }
 
 func (b baseUser) isUser() {}
 
-type Person struct {
-	Email string `json:"email"`
-}
-
 type PersonUser struct {
 	baseUser
-	Person Person `json:"person"`
+	Person *struct {
+		Email string `json:"email"`
+	} `json:"person"`
 }
-
-type Bot struct{}
 
 type BotUser struct {
 	baseUser
-	Bot Bot `json:"bot"`
+	Bot interface{} `json:"bot"`
 }
 
 type UsersRetrieveParameters struct {
-	UserID string `json:"-" url:"-"`
+	UserID string `json:"-"`
 }
 
 type UsersRetrieveResponse struct {
 	User
 }
 
-func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) (err error) {
-	var decoder userDecoder
+func (u *UsersRetrieveResponse) UnmarshalJSON(data []byte) error {
+	var base baseUser
 
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal UsersRetrieveResponse: %w", err)
+	if err := json.Unmarshal(data, &base); err != nil {
+		return err
 	}
 
-	u.User = decoder.User
+	switch base.Type {
+	case UserTypePerson:
+		var user PersonUser
+
+		if err := json.Unmarshal(data, &user); err != nil {
+			return err
+		}
+
+		u.User = user
+
+	case UserTypeBot:
+		var user BotUser
+
+		if err := json.Unmarshal(data, &user); err != nil {
+			return err
+		}
+
+		u.User = user
+	}
 
 	return nil
 }
@@ -73,19 +92,43 @@ func (u *UsersListResponse) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Results []userDecoder `json:"results"`
+		Results []json.RawMessage `json:"results"`
 	}{
 		Alias: (*Alias)(u),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return fmt.Errorf("failed to unmarshal UsersListResponse: %w", err)
+		return err
 	}
 
 	u.Results = make([]User, 0, len(alias.Results))
 
-	for _, decoder := range alias.Results {
-		u.Results = append(u.Results, decoder.User)
+	for _, result := range alias.Results {
+		var base baseUser
+
+		if err := json.Unmarshal(result, &base); err != nil {
+			return err
+		}
+
+		switch base.Type {
+		case UserTypePerson:
+			var user PersonUser
+
+			if err := json.Unmarshal(result, &user); err != nil {
+				return err
+			}
+
+			u.Results = append(u.Results, user)
+
+		case UserTypeBot:
+			var user BotUser
+
+			if err := json.Unmarshal(result, &user); err != nil {
+				return err
+			}
+
+			u.Results = append(u.Results, user)
+		}
 	}
 
 	return nil
@@ -97,60 +140,43 @@ type UsersInterface interface {
 }
 
 type usersClient struct {
-	restClient rest.Interface
+	client client
 }
 
-func newUsersClient(restClient rest.Interface) *usersClient {
+func newUsersClient(client client) *usersClient {
 	return &usersClient{
-		restClient: restClient,
+		client: client,
 	}
 }
 
 func (u *usersClient) Retrieve(ctx context.Context, params UsersRetrieveParameters) (*UsersRetrieveResponse, error) {
-	var result UsersRetrieveResponse
+	endpoint := strings.Replace(APIUsersRetrieveEndpoint, "{user_id}", params.UserID, 1)
 
-	var failure HTTPError
+	b, err := u.client.Request(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	err := u.restClient.New().Get().
-		Endpoint(strings.Replace(APIUsersRetrieveEndpoint, "{user_id}", params.UserID, 1)).
-		Receive(ctx, &result, &failure)
+	var response UsersRetrieveResponse
 
-	return &result, err // nolint:wrapcheck
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 func (u *usersClient) List(ctx context.Context, params UsersListParameters) (*UsersListResponse, error) {
-	var result UsersListResponse
-
-	var failure HTTPError
-
-	err := u.restClient.New().Get().
-		Endpoint(APIUsersListEndpoint).
-		QueryStruct(params).
-		Receive(ctx, &result, &failure)
-
-	return &result, err // nolint:wrapcheck
-}
-
-type userDecoder struct {
-	User
-}
-
-func (u *userDecoder) UnmarshalJSON(data []byte) error {
-	var decoder struct {
-		Type UserType `json:"type"`
+	b, err := u.client.Request(ctx, http.MethodGet, APIUsersListEndpoint, params)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := json.Unmarshal(data, &decoder); err != nil {
-		return fmt.Errorf("failed to unmarshal User: %w", err)
+	var response UsersListResponse
+
+	if err := json.Unmarshal(b, &response); err != nil {
+		return nil, err
 	}
 
-	switch decoder.Type {
-	case UserTypePerson:
-		u.User = &PersonUser{}
-
-	case UserTypeBot:
-		u.User = &BotUser{}
-	}
-
-	return json.Unmarshal(data, u.User)
+	return &response, nil
 }

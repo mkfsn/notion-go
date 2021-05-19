@@ -1,10 +1,5 @@
 # notion-go
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/mkfsn/notion-go)](https://goreportcard.com/report/github.com/mkfsn/notion-go)
-[![Actions Status](https://github.com/mkfsn/notion-go/actions/workflows/develop.yaml/badge.svg)](https://github.com/mkfsn/notion-go/actions)
-[![codecov](https://codecov.io/gh/mkfsn/notion-go/branch/develop/graph/badge.svg?token=NA64P6EPQ0)](https://codecov.io/gh/mkfsn/notion-go)
-
-
 A go client for the [Notion API](https://developers.notion.com/)
 
 ## Description
@@ -17,47 +12,6 @@ which is written in JavaScript.
 ```
 go get -u github.com/mkfsn/notion-go
 ```
-
-## Usage
-
-```go
-c := notion.New("<NOTION_AUTH_TOKEN>")
-
-// Retrieve block children
-c.Blocks().Children().List(...)
-
-// Append block children
-c.Blocks().Children().Append(...)
-
-// List databases
-c.Databases().List(...)
-
-// Query a database
-c.Databases().Query(...)
-
-// Retrieve a database
-c.Databases().Retrieve(...)
-
-// Create a page
-c.Pages().Create(...)
-
-// Retrieve a page
-c.Pages().Retreive(...)
-
-// Update page properties
-c.Pages().Update(...)
-
-// List all users
-c.Users().List(...)
-
-// Retrieve a user
-c.Users().Retrieve(...)
-
-// Search
-c.Search(...)
-```
-
-For more information, please see [examples](./examples).
 
 ## Supported Features
 
