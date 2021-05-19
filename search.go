@@ -3,20 +3,9 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
-)
+	"fmt"
 
-type SearchFilterValue string
-
-const (
-	SearchFilterValuePage     SearchFilterValue = "page"
-	SearchFilterValueDatabase SearchFilterValue = "database"
-)
-
-type SearchFilterProperty string
-
-const (
-	SearchFilterPropertyObject SearchFilterProperty = "object"
+	"github.com/mkfsn/notion-go/rest"
 )
 
 type SearchFilter struct {
@@ -29,19 +18,6 @@ type SearchFilter struct {
 	// filter by type of object (either `page` or `database`)
 	Property SearchFilterProperty `json:"property"`
 }
-
-type SearchSortDirection string
-
-const (
-	SearchSortDirectionAscending  SearchSortDirection = "ascending"
-	SearchSortDirectionDescending SearchSortDirection = " descending"
-)
-
-type SearchSortTimestamp string
-
-const (
-	SearchSortTimestampLastEditedTime SearchSortTimestamp = "last_edited_time"
-)
 
 type SearchSort struct {
 	// The direction to sort.
@@ -71,45 +47,19 @@ func (s *SearchResponse) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Results []json.RawMessage `json:"results"`
+		Results []searchableObjectDecoder `json:"results"`
 	}{
 		Alias: (*Alias)(s),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal SearchResponse: %w", err)
 	}
 
 	s.Results = make([]SearchableObject, 0, len(alias.Results))
 
-	for _, result := range alias.Results {
-		var base struct {
-			Object ObjectType `json:"object"`
-		}
-
-		if err := json.Unmarshal(result, &base); err != nil {
-			return err
-		}
-
-		switch base.Object {
-		case ObjectTypePage:
-			var object Page
-
-			if err := json.Unmarshal(result, &object); err != nil {
-				return err
-			}
-
-			s.Results = append(s.Results, object)
-
-		case ObjectTypeDatabase:
-			var object Database
-
-			if err := json.Unmarshal(result, &object); err != nil {
-				return err
-			}
-
-			s.Results = append(s.Results, object)
-		}
+	for _, decoder := range alias.Results {
+		s.Results = append(s.Results, decoder.SearchableObject)
 	}
 
 	return nil
@@ -120,26 +70,53 @@ type SearchInterface interface {
 }
 
 type searchClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newSearchClient(client client) *searchClient {
+func newSearchClient(restClient rest.Interface) *searchClient {
 	return &searchClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (s *searchClient) Search(ctx context.Context, params SearchParameters) (*SearchResponse, error) {
-	b, err := s.client.Request(ctx, http.MethodPost, APISearchEndpoint, params)
-	if err != nil {
-		return nil, err
+	var result SearchResponse
+
+	var failure HTTPError
+
+	err := s.restClient.New().
+		Post().
+		Endpoint(APISearchEndpoint).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
+
+	return &result, err // nolint:wrapcheck
+}
+
+type searchableObjectDecoder struct {
+	SearchableObject
+}
+
+func (s *searchableObjectDecoder) UnmarshalJSON(data []byte) error {
+	var decoder struct {
+		Object ObjectType `json:"object"`
 	}
 
-	var response SearchResponse
-
-	if err := json.Unmarshal(b, &response); err != nil {
-		return nil, err
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return fmt.Errorf("failed to unmarshal SearchableObject: %w", err)
 	}
 
-	return &response, nil
+	switch decoder.Object {
+	case ObjectTypePage:
+		s.SearchableObject = &Page{}
+
+	case ObjectTypeDatabase:
+		s.SearchableObject = &Database{}
+
+	case ObjectTypeBlock, ObjectTypeList, ObjectTypeUser:
+		return ErrUnknown
+	}
+
+	return json.Unmarshal(data, s.SearchableObject)
 }

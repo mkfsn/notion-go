@@ -3,131 +3,16 @@ package notion
 import (
 	"context"
 	"encoding/json"
-	"net/http"
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/mkfsn/notion-go/rest"
 )
 
 type Block interface {
 	isBlock()
 }
-
-func newBlock(data []byte) (Block, error) {
-	var base BlockBase
-
-	if err := json.Unmarshal(data, &base); err != nil {
-		return nil, err
-	}
-
-	switch base.Type {
-	case BlockTypeParagraph:
-		var block ParagraphBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeHeading1:
-		var block Heading1Block
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeHeading2:
-		var block Heading2Block
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeHeading3:
-		var block Heading3Block
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeBulletedListItem:
-		var block BulletedListItemBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeNumberedListItem:
-		var block NumberedListItemBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeToDo:
-		var block ToDoBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeToggle:
-		var block ToggleBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeChildPage:
-		var block ChildPageBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-
-	case BlockTypeUnsupported:
-		var block UnsupportedBlock
-
-		if err := json.Unmarshal(data, &block); err != nil {
-			return nil, err
-		}
-
-		return block, nil
-	}
-
-	return nil, ErrUnknown
-}
-
-type BlockType string
-
-const (
-	BlockTypeParagraph        BlockType = "paragraph"
-	BlockTypeHeading1         BlockType = "heading_1"
-	BlockTypeHeading2         BlockType = "heading_2"
-	BlockTypeHeading3         BlockType = "heading_3"
-	BlockTypeBulletedListItem BlockType = "bulleted_list_item"
-	BlockTypeNumberedListItem BlockType = "numbered_list_item"
-	BlockTypeToDo             BlockType = "to_do"
-	BlockTypeToggle           BlockType = "toggle"
-	BlockTypeChildPage        BlockType = "child_page"
-	BlockTypeUnsupported      BlockType = "unsupported"
-)
 
 type BlockBase struct {
 	// Always "block".
@@ -141,7 +26,7 @@ type BlockBase struct {
 	// Date and time when this block was last updated. Formatted as an ISO 8601 date time string.
 	LastEditedTime *time.Time `json:"last_edited_time,omitempty"`
 	// Whether or not the block has children blocks nested within it.
-	HasChildren *bool `json:"has_children,omitempty"`
+	HasChildren bool `json:"has_children,omitempty"`
 }
 
 func (b BlockBase) isBlock() {}
@@ -153,6 +38,24 @@ type ParagraphBlock struct {
 
 type HeadingBlock struct {
 	Text []RichText `json:"text"`
+}
+
+func (h *HeadingBlock) UnmarshalJSON(data []byte) error {
+	var alias struct {
+		Text []richTextDecoder `json:"text"`
+	}
+
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return fmt.Errorf("failed to unmarshal HeadingBlock: %w", err)
+	}
+
+	h.Text = make([]RichText, 0, len(alias.Text))
+
+	for _, decoder := range alias.Text {
+		h.Text = append(h.Text, decoder.RichText)
+	}
+
+	return nil
 }
 
 type Heading1Block struct {
@@ -171,8 +74,33 @@ type Heading3Block struct {
 }
 
 type RichTextBlock struct {
-	Text     []RichText  `json:"text"`
-	Children []BlockBase `json:"children,omitempty"`
+	Text     []RichText `json:"text"`
+	Children []Block    `json:"children,omitempty"`
+}
+
+func (r *RichTextBlock) UnmarshalJSON(data []byte) error {
+	var alias struct {
+		Text     []richTextDecoder `json:"text"`
+		Children []blockDecoder    `json:"children"`
+	}
+
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return fmt.Errorf("failed to unmarshal RichTextBlock: %w", err)
+	}
+
+	r.Text = make([]RichText, 0, len(r.Text))
+
+	for _, decoder := range alias.Text {
+		r.Text = append(r.Text, decoder.RichText)
+	}
+
+	r.Children = make([]Block, 0, len(r.Children))
+
+	for _, decoder := range alias.Children {
+		r.Children = append(r.Children, decoder.Block)
+	}
+
+	return nil
 }
 
 type BulletedListItemBlock struct {
@@ -222,9 +150,9 @@ type blocksClient struct {
 	childrenClient *blocksChildrenClient
 }
 
-func newBlocksClient(client client) *blocksClient {
+func newBlocksClient(restClient rest.Interface) *blocksClient {
 	return &blocksClient{
-		childrenClient: newBlocksChildrenClient(client),
+		childrenClient: newBlocksChildrenClient(restClient),
 	}
 }
 
@@ -232,6 +160,7 @@ func (b *blocksClient) Children() BlocksChildrenInterface {
 	if b == nil {
 		return nil
 	}
+
 	return b.childrenClient
 }
 
@@ -239,7 +168,7 @@ type BlocksChildrenListParameters struct {
 	PaginationParameters
 
 	// Identifier for a block
-	BlockID string `json:"-"`
+	BlockID string `json:"-" url:"-"`
 }
 
 type BlocksChildrenListResponse struct {
@@ -252,23 +181,19 @@ func (b *BlocksChildrenListResponse) UnmarshalJSON(data []byte) error {
 
 	alias := struct {
 		*Alias
-		Results []json.RawMessage `json:"results"`
+		Results []blockDecoder `json:"results"`
 	}{
 		Alias: (*Alias)(b),
 	}
 
 	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal BlocksChildrenListResponse: %w", err)
 	}
 
 	b.Results = make([]Block, 0, len(alias.Results))
 
-	for _, value := range alias.Results {
-		block, err := newBlock(value)
-		if err != nil {
-			return err
-		}
-		b.Results = append(b.Results, block)
+	for _, decoder := range alias.Results {
+		b.Results = append(b.Results, decoder.Block)
 	}
 
 	return nil
@@ -286,12 +211,13 @@ type BlocksChildrenAppendResponse struct {
 }
 
 func (b *BlocksChildrenAppendResponse) UnmarshalJSON(data []byte) error {
-	block, err := newBlock(data)
-	if err != nil {
-		return err
+	var decoder blockDecoder
+
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return fmt.Errorf("failed to unmarshal BlocksChildrenAppendResponse: %w", err)
 	}
 
-	b.Block = block
+	b.Block = decoder.Block
 
 	return nil
 }
@@ -302,45 +228,88 @@ type BlocksChildrenInterface interface {
 }
 
 type blocksChildrenClient struct {
-	client client
+	restClient rest.Interface
 }
 
-func newBlocksChildrenClient(client client) *blocksChildrenClient {
+func newBlocksChildrenClient(restClient rest.Interface) *blocksChildrenClient {
 	return &blocksChildrenClient{
-		client: client,
+		restClient: restClient,
 	}
 }
 
 func (b *blocksChildrenClient) List(ctx context.Context, params BlocksChildrenListParameters) (*BlocksChildrenListResponse, error) {
-	endpoint := strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)
+	var result BlocksChildrenListResponse
 
-	data, err := b.client.Request(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
+	var failure HTTPError
 
-	var response BlocksChildrenListResponse
+	err := b.restClient.New().Get().
+		Endpoint(strings.Replace(APIBlocksListChildrenEndpoint, "{block_id}", params.BlockID, 1)).
+		QueryStruct(params).
+		Receive(ctx, &result, &failure)
 
-	if err := json.Unmarshal(data, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return &result, err // nolint:wrapcheck
 }
 
 func (b *blocksChildrenClient) Append(ctx context.Context, params BlocksChildrenAppendParameters) (*BlocksChildrenAppendResponse, error) {
-	endpoint := strings.Replace(APIBlocksAppendChildrenEndpoint, "{block_id}", params.BlockID, 1)
+	var result BlocksChildrenAppendResponse
 
-	data, err := b.client.Request(ctx, http.MethodPatch, endpoint, params)
-	if err != nil {
-		return nil, err
+	var failure HTTPError
+
+	err := b.restClient.New().Patch().
+		Endpoint(strings.Replace(APIBlocksAppendChildrenEndpoint, "{block_id}", params.BlockID, 1)).
+		QueryStruct(params).
+		BodyJSON(params).
+		Receive(ctx, &result, &failure)
+
+	return &result, err // nolint:wrapcheck
+}
+
+type blockDecoder struct {
+	Block
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+// nolint: cyclop
+func (b *blockDecoder) UnmarshalJSON(data []byte) error {
+	var decoder struct {
+		Type BlockType `json:"type"`
 	}
 
-	var response BlocksChildrenAppendResponse
-
-	if err := json.Unmarshal(data, &response); err != nil {
-		return nil, err
+	if err := json.Unmarshal(data, &decoder); err != nil {
+		return fmt.Errorf("failed to unmarshal Block: %w", err)
 	}
 
-	return &response, nil
+	switch decoder.Type {
+	case BlockTypeParagraph:
+		b.Block = &ParagraphBlock{}
+
+	case BlockTypeHeading1:
+		b.Block = &Heading1Block{}
+
+	case BlockTypeHeading2:
+		b.Block = &Heading2Block{}
+
+	case BlockTypeHeading3:
+		b.Block = &Heading3Block{}
+
+	case BlockTypeBulletedListItem:
+		b.Block = &BulletedListItemBlock{}
+
+	case BlockTypeNumberedListItem:
+		b.Block = &NumberedListItemBlock{}
+
+	case BlockTypeToDo:
+		b.Block = &ToDoBlock{}
+
+	case BlockTypeToggle:
+		b.Block = &ToggleBlock{}
+
+	case BlockTypeChildPage:
+		b.Block = &ChildPageBlock{}
+
+	case BlockTypeUnsupported:
+		b.Block = &UnsupportedBlock{}
+	}
+
+	return json.Unmarshal(data, &b.Block)
 }

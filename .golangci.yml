@@ -1,0 +1,29 @@
+# https://github.com/golangci/golangci-lint#config-file
+run:
+  skip-dirs:
+  - pkg/orm
+  - mock_*
+  # build-tags:
+  tests: false
+  deadline: 5m
+  print-resources-usage: true
+
+linters:
+  enable-all: true
+  disable:
+  - godox            # Tool for detection of FIXME, TODO and other comment keywords [fast: true, auto-fix: false]
+  - gochecknoglobals # Checks that no globals are present in Go code [fast: true, auto-fix: false]
+  - gofumpt
+  - maligned
+  - interfacer
+
+linters-settings:
+  govet:
+    # https://github.com/golangci/golangci-lint/issues/484
+    # report about shadowed variables
+    check-shadowing: false
+  lll:
+    line-length: 150
+  funlen:
+    lines: 70
+    statements: 50
