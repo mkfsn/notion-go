@@ -24,37 +24,37 @@ go get -u github.com/mkfsn/notion-go
 c := notion.New("<NOTION_AUTH_TOKEN>")
 
 // Retrieve block children
-c.Blocks().Children().List(...)
+c.Blocks().Children().List(context.Background(), notion.BlocksChildrenListParameters{...})
 
 // Append block children
-c.Blocks().Children().Append(...)
+c.Blocks().Children().Append(context.Background(), notion.BlocksChildrenAppendParameters{...})
 
 // List databases
-c.Databases().List(...)
+c.Databases().List(context.Background(), notion.DatabasesListParameters{...})
 
 // Query a database
-c.Databases().Query(...)
+c.Databases().Query(context.Background(), notion.DatabasesQueryParameters{...})
 
 // Retrieve a database
-c.Databases().Retrieve(...)
+c.Databases().Retrieve(context.Background(), notion.DatabasesRetrieveParameters{...})
 
 // Create a page
-c.Pages().Create(...)
+c.Pages().Create(context.Background(), notion.PagesCreateParameters{...})
 
 // Retrieve a page
-c.Pages().Retreive(...)
+c.Pages().Retreive(context.Background(), notion.PagesRetrieveParameters{...})
 
 // Update page properties
-c.Pages().Update(...)
+c.Pages().Update(context.Background(), notion.PagesUpdateParameters{...})
 
 // List all users
-c.Users().List(...)
+c.Users().List(context.Background(), notion.UsersListParameters{...})
 
 // Retrieve a user
-c.Users().Retrieve(...)
+c.Users().Retrieve(context.Background(), notion.UsersRetrieveParameters{...})
 
 // Search
-c.Search(...)
+c.Search(context.Background(), notion.SearchParameters{...})
 ```
 
 For more information, please see [examples](./examples).
